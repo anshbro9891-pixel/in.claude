@@ -75,27 +75,33 @@ async function executeInSandbox(
   let stderr = "";
 
   if (language === "python") {
-    // Check for print statements - use non-greedy match with explicit exclusion
-    const prints = code.match(/print\([^)]*\)/g);
-    if (prints) {
-      stdout = prints.map((p) => {
-        const content = p.slice(6, -1); // Remove "print(" and ")"
-        // Remove quotes for string literals
-        return content.replace(/^["']|["']$/g, "").replace(/^f["']|["']$/g, "");
-      }).join("\n");
-    } else {
-      stdout = `[Executed ${lines} lines of Python code successfully]`;
+    // Extract output from print statements using simple string parsing
+    const printOutputs: string[] = [];
+    for (const line of code.split("\n")) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("print(") && trimmed.endsWith(")")) {
+        const content = trimmed.slice(6, -1);
+        printOutputs.push(content.replace(/^["']|["']$/g, ""));
+      }
     }
+    stdout = printOutputs.length > 0
+      ? printOutputs.join("\n")
+      : `[Executed ${lines} lines of Python code successfully]`;
   } else if (language === "javascript" || language === "typescript") {
-    const logs = code.match(/console\.log\([^)]*\)/g);
-    if (logs) {
-      stdout = logs.map((l) => {
-        const content = l.slice(12, -1); // Remove "console.log(" and ")"
-        return content.replace(/^["'`]|["'`]$/g, "");
-      }).join("\n");
-    } else {
-      stdout = `[Executed ${lines} lines of ${language === "typescript" ? "TypeScript" : "JavaScript"} code successfully]`;
+    const logOutputs: string[] = [];
+    for (const line of code.split("\n")) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("console.log(") && trimmed.endsWith(");")) {
+        const content = trimmed.slice(12, -2);
+        logOutputs.push(content.replace(/^["'`]|["'`]$/g, ""));
+      } else if (trimmed.startsWith("console.log(") && trimmed.endsWith(")")) {
+        const content = trimmed.slice(12, -1);
+        logOutputs.push(content.replace(/^["'`]|["'`]$/g, ""));
+      }
     }
+    stdout = logOutputs.length > 0
+      ? logOutputs.join("\n")
+      : `[Executed ${lines} lines of ${language === "typescript" ? "TypeScript" : "JavaScript"} code successfully]`;
   } else {
     stdout = `[Executed ${lines} lines of ${language} code successfully]`;
   }
