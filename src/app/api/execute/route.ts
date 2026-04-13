@@ -75,11 +75,11 @@ async function executeInSandbox(
   let stderr = "";
 
   if (language === "python") {
-    // Check for print statements
-    const prints = code.match(/print\((.+?)\)/g);
+    // Check for print statements - use non-greedy match with explicit exclusion
+    const prints = code.match(/print\([^)]*\)/g);
     if (prints) {
       stdout = prints.map((p) => {
-        const content = p.match(/print\((.+?)\)/)?.[1] || "";
+        const content = p.slice(6, -1); // Remove "print(" and ")"
         // Remove quotes for string literals
         return content.replace(/^["']|["']$/g, "").replace(/^f["']|["']$/g, "");
       }).join("\n");
@@ -87,10 +87,10 @@ async function executeInSandbox(
       stdout = `[Executed ${lines} lines of Python code successfully]`;
     }
   } else if (language === "javascript" || language === "typescript") {
-    const logs = code.match(/console\.log\((.+?)\)/g);
+    const logs = code.match(/console\.log\([^)]*\)/g);
     if (logs) {
       stdout = logs.map((l) => {
-        const content = l.match(/console\.log\((.+?)\)/)?.[1] || "";
+        const content = l.slice(12, -1); // Remove "console.log(" and ")"
         return content.replace(/^["'`]|["'`]$/g, "");
       }).join("\n");
     } else {
