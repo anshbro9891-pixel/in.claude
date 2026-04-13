@@ -258,11 +258,13 @@ async function askInline(message) {
 
 /**
  * Sanitizes user-provided file names to avoid invalid keys and prototype pollution.
+ * Dotfiles (for example .env) are intentionally allowed for template workflows.
  */
 function sanitizeFileName(name) {
   const trimmed = name.trim().replace(/[/\\]/g, '_');
   if (!trimmed) return '';
   if (['__proto__', 'prototype', 'constructor'].includes(trimmed)) return '';
   if (!/^[a-zA-Z0-9._-]+$/.test(trimmed)) return '';
+  if (trimmed.length > 120) return '';
   return trimmed;
 }

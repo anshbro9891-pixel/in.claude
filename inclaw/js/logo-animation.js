@@ -8,6 +8,7 @@ export function initLogoIntro() {
       shown = sessionStorage.getItem('inclaw_intro_shown') === 'true';
     } catch (storageError) {
       console.warn('[INCLAW] Intro sessionStorage read failed', storageError);
+      shown = true;
     }
     const overlay = document.getElementById('intro-overlay');
     const content = document.querySelector('.site-shell');
