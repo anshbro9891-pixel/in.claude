@@ -25,7 +25,7 @@ export default function RootLayout({
       lang="en"
       className="h-full antialiased dark"
     >
-      <body className="min-h-full flex flex-col bg-[#030014] text-slate-200" style={{ fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+      <body className="min-h-full flex flex-col bg-[#030014] text-slate-200 font-sans">
         {children}
       </body>
     </html>
