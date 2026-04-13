@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>INCLAW Learn</title>
+<link rel="icon" href="assets/favicon.ico"/><link rel="stylesheet" href="css/global.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head><body class="grid-bg"><div id="intro-overlay" class="intro-overlay"><svg width="140" height="140" viewBox="0 0 200 200" fill="none"><path id="intro-hex" d="M60 25h80l40 75-40 75H60L20 100z" stroke="white" stroke-width="4"/><path id="intro-brain" d="M70 92c0-14 11-25 25-25 7 0 13 3 18 7 5-4 11-7 18-7 14 0 25 11 25 25 0 14-11 25-25 25h-61V92z" fill="#FF2D55"/></svg><h1 id="intro-title" class="intro-title"></h1><p id="intro-tagline" class="intro-tagline">The AI That Thinks, Codes, Conquers.</p></div>
+<div class="site-shell"><main>
+<h1 class="section-title">Learn INCLAW</h1>
+<p class="section-subtitle">Guides, architecture docs, model playbooks, and workspace tutorials.</p>
+<div class="card-grid" data-reveal>
+  <article class="card"><h3>Getting Started</h3><p>Set up your first chat, choose model mode, and save sessions.</p></article>
+  <article class="card"><h3>Model Routing Guide</h3><p>Understand code vs reasoning routing and manual override options.</p></article>
+  <article class="card"><h3>Workspace Deep Dive</h3><p>Templates, Monaco shortcuts, AI insertion, and preview tab workflows.</p></article>
+  <article class="card"><h3>Supabase Memory</h3><p>Persistent chats, message schema, and profile plan handling.</p></article>
+</div>
+</main></div>
+<script type="module">import { initSharedLayout, initRevealAnimations } from './js/navbar.js'; import { initLogoIntro } from './js/logo-animation.js'; initSharedLayout(); initRevealAnimations(); initLogoIntro();</script>
+</body></html>

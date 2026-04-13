@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>INCLAW Login</title>
+<link rel="icon" href="assets/favicon.ico"/><link rel="stylesheet" href="css/global.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.45.4/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head><body class="grid-bg"><div id="intro-overlay" class="intro-overlay"><svg width="140" height="140" viewBox="0 0 200 200" fill="none"><path id="intro-hex" d="M60 25h80l40 75-40 75H60L20 100z" stroke="white" stroke-width="4"/><path id="intro-brain" d="M70 92c0-14 11-25 25-25 7 0 13 3 18 7 5-4 11-7 18-7 14 0 25 11 25 25 0 14-11 25-25 25h-61V92z" fill="#FF2D55"/></svg><h1 id="intro-title" class="intro-title"></h1><p id="intro-tagline" class="intro-tagline">The AI That Thinks, Codes, Conquers.</p></div>
+<div class="site-shell"><main style="display:grid;place-items:center;min-height:70vh">
+  <section class="glass" style="width:min(430px,94%);padding:20px">
+    <h1 class="section-title" style="font-size:1.8rem">Login / Signup</h1>
+    <p class="section-subtitle">Use Supabase auth with email or OAuth.</p>
+    <form id="auth-form">
+      <div style="display:flex;gap:10px;margin-bottom:10px"><label><input type="radio" name="auth-mode" value="login" checked/> Login</label><label><input type="radio" name="auth-mode" value="signup"/> Signup</label></div>
+      <input id="email" type="email" required placeholder="Email" style="width:100%;margin-bottom:8px;padding:10px;border-radius:10px;border:1px solid var(--border-glass);background:#0f0f0f;color:#fff"/>
+      <input id="password" type="password" required placeholder="Password" style="width:100%;margin-bottom:10px;padding:10px;border-radius:10px;border:1px solid var(--border-glass);background:#0f0f0f;color:#fff"/>
+      <button class="btn btn-solid" style="width:100%">Continue</button>
+    </form>
+    <div style="display:flex;gap:8px;margin-top:8px"><button id="oauth-google" class="btn btn-gradient" style="flex:1">Google</button><button id="oauth-github" class="btn btn-gradient" style="flex:1">GitHub</button></div>
+    <p id="auth-status" style="margin-top:10px;color:#f59fae"></p>
+  </section>
+</main></div>
+<script type="module">
+import { initSharedLayout } from './js/navbar.js';
+import { initLogoIntro } from './js/logo-animation.js';
+import { bindLoginPage } from './js/auth.js';
+initSharedLayout(); initLogoIntro(); bindLoginPage();
+</script>
+</body></html>
