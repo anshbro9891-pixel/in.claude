@@ -1,39 +1,22 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Heart, Shield, Rocket, Users } from "lucide-react";
+import { Shield, Heart, Rocket, Users, Database, Brain } from "lucide-react";
+import InclawLogo from "@/components/InclawLogo";
 
 const values = [
-  {
-    icon: Shield,
-    title: "Fully Open Source",
-    description:
-      "Every model, every line of code, every training dataset — open and auditable. We believe AI should be transparent.",
-  },
-  {
-    icon: Heart,
-    title: "Made with Pride in India",
-    description:
-      "INCLAW represents India's growing strength in AI. Built by Indian engineers, for developers everywhere.",
-  },
-  {
-    icon: Rocket,
-    title: "Production-Ready Code",
-    description:
-      "Not toy examples — INCLAW generates code you can ship. Clean, tested, following best practices.",
-  },
-  {
-    icon: Users,
-    title: "Community-Driven",
-    description:
-      "Built by the community, for the community. Contribute models, datasets, and improvements on GitHub.",
-  },
+  { icon: Shield,   title: "Zero Vendor Lock-in",   desc: "Every weight is open. Run Ollama locally, use Groq, HuggingFace, or Together AI. Swap models anytime." },
+  { icon: Heart,    title: "Built with Indian Pride", desc: "INCLAW champions Digital India and Atmanirbhar Bharat in AI — built by Indian engineers for the world." },
+  { icon: Rocket,   title: "Production-Grade Output", desc: "Not toy code. INCLAW outputs clean, tested, documented code following SOLID principles and security best practices." },
+  { icon: Users,    title: "Community Driven",        desc: "Open-source under MIT. Contribute models, datasets, plugins and improvements on GitHub." },
+  { icon: Database, title: "Persistent Memory",       desc: "Supabase-powered chat history. Resume sessions, search past conversations, and build on previous context." },
+  { icon: Brain,    title: "Transparent Reasoning",   desc: "INCLAW shows every thinking step — planning, searching, generating, and self-reviewing. No black boxes." },
 ];
 
 export default function AboutSection() {
   return (
     <section id="about" className="relative py-24 sm:py-32">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/[0.02] to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-500/[0.02] to-transparent" />
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <motion.div
@@ -43,88 +26,92 @@ export default function AboutSection() {
           transition={{ duration: 0.6 }}
           className="text-center"
         >
-          <h2 className="text-sm font-semibold uppercase tracking-widest text-cyan-400">
-            About INCLAW
-          </h2>
-          <p className="mt-3 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
+          <div className="mb-6 flex justify-center">
+            <InclawLogo size={56} animated />
+          </div>
+          <h2 className="text-3xl font-black text-white sm:text-4xl lg:text-5xl">
             India&apos;s Answer to{" "}
-            <span className="bg-gradient-to-r from-orange-400 to-cyan-400 bg-clip-text text-transparent">
-              Proprietary AI
-            </span>
-          </p>
-          <p className="mx-auto mt-6 max-w-3xl text-lg leading-relaxed text-slate-400">
-            INCLAW was born from a simple belief: world-class AI coding assistance
-            should not be locked behind proprietary walls. By combining the best
-            open-source large language models — CodeLlama, DeepSeek Coder,
-            StarCoder2, Mixtral, Llama 3, and Qwen2.5 Coder — we&apos;ve built an
-            agentic coding system that rivals the best proprietary solutions.
+            <span className="text-gradient-full">Proprietary AI</span>
+          </h2>
+          <p className="mx-auto mt-5 max-w-3xl text-lg leading-relaxed text-slate-500">
+            INCLAW was born from a simple conviction — world-class AI should be open, auditable,
+            and built on the shoulders of the open-source community. We combine the best open
+            models into a multi-step agentic system backed by Supabase for memory and persistence.
           </p>
         </motion.div>
 
-        {/* Values grid */}
-        <div className="mt-16 grid gap-8 sm:grid-cols-2">
-          {values.map((value, i) => (
+        {/* Values */}
+        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {values.map((v, i) => (
             <motion.div
-              key={value.title}
+              key={v.title}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="flex gap-5 rounded-2xl border border-white/5 bg-[#0a0625]/60 p-6 backdrop-blur-sm"
+              transition={{ duration: 0.5, delay: i * 0.08 }}
+              className="flex gap-4 rounded-2xl border border-white/5 glass p-6"
             >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-cyan-500/20">
-                <value.icon className="h-6 w-6 text-orange-400" />
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-cyan-500/20">
+                <v.icon className="h-5 w-5 text-orange-400" />
               </div>
               <div>
-                <h3 className="mb-2 text-lg font-semibold text-white">
-                  {value.title}
-                </h3>
-                <p className="text-sm leading-relaxed text-slate-400">
-                  {value.description}
-                </p>
+                <h3 className="mb-1.5 text-sm font-bold text-white">{v.title}</h3>
+                <p className="text-xs leading-relaxed text-slate-500">{v.desc}</p>
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Architecture diagram placeholder */}
+        {/* Architecture flow */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="mx-auto mt-16 max-w-3xl rounded-2xl border border-white/10 bg-[#0a0625] p-8"
+          className="mx-auto mt-16 max-w-3xl rounded-2xl border border-white/8 glass p-8"
         >
-          <h3 className="mb-6 text-center text-lg font-semibold text-white">
-            How INCLAW Works
+          <h3 className="mb-6 text-center text-base font-bold text-white">
+            INCLAW Architecture
           </h3>
-          <div className="flex flex-col items-center gap-4 text-sm">
-            <div className="w-full max-w-md rounded-xl border border-orange-500/30 bg-orange-500/10 px-6 py-3 text-center text-orange-300">
-              📝 Your Prompt
+          <div className="flex flex-col items-center gap-3 text-xs">
+            {[
+              { label: "Your Prompt",                 color: "border-orange-500/30 bg-orange-500/8 text-orange-300" },
+              { label: "⬇",                           color: "text-slate-600",               divider: true },
+              { label: "INCLAW Agent — Thinks & Plans", color: "border-white/10 bg-white/5 text-slate-300" },
+              { label: "⬇",                           color: "text-slate-600",               divider: true },
+              { label: "Model Router — Picks Best LLM", color: "border-cyan-500/30 bg-cyan-500/8 text-cyan-300" },
+              { label: "⬇",                           color: "text-slate-600",               divider: true },
+            ].map((item, i) =>
+              item.divider ? (
+                <span key={i} className={item.color}>{item.label}</span>
+              ) : (
+                <div key={i} className={`w-full max-w-sm rounded-xl border px-5 py-2.5 text-center font-medium ${item.color}`}>
+                  {item.label}
+                </div>
+              )
+            )}
+            <div className="grid w-full max-w-lg grid-cols-3 gap-2">
+              {["CodeLlama", "DeepSeek", "Gemma 3"].map((m) => (
+                <div key={m} className="rounded-lg border border-cyan-500/20 bg-cyan-500/8 px-3 py-2 text-center text-cyan-300">
+                  {m}
+                </div>
+              ))}
             </div>
-            <div className="h-6 w-px bg-gradient-to-b from-orange-500/50 to-cyan-500/50" />
-            <div className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-center text-slate-300">
-              🧠 INCLAW Agent — Plans, Decomposes & Routes
-            </div>
-            <div className="h-6 w-px bg-gradient-to-b from-cyan-500/50 to-orange-500/50" />
-            <div className="grid w-full max-w-lg grid-cols-3 gap-3">
-              <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-center text-xs text-cyan-300">
-                CodeLlama
-              </div>
-              <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-center text-xs text-cyan-300">
-                DeepSeek
-              </div>
-              <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-center text-xs text-cyan-300">
-                StarCoder2
-              </div>
-            </div>
-            <div className="h-6 w-px bg-gradient-to-b from-orange-500/50 to-cyan-500/50" />
-            <div className="w-full max-w-md rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-center text-slate-300">
-              🔄 Iterates, Tests & Refines
-            </div>
-            <div className="h-6 w-px bg-gradient-to-b from-cyan-500/50 to-green-500/50" />
-            <div className="w-full max-w-md rounded-xl border border-green-500/30 bg-green-500/10 px-6 py-3 text-center text-green-300">
+            {["⬇", "Self-Reviews & Fixes", "⬇"].map((item, i) =>
+              item === "⬇" ? (
+                <span key={i} className="text-slate-600">{item}</span>
+              ) : (
+                <div key={i} className="w-full max-w-sm rounded-xl border border-white/10 bg-white/5 px-5 py-2.5 text-center text-slate-300">
+                  🔄 {item}
+                </div>
+              )
+            )}
+            <div className="w-full max-w-sm rounded-xl border border-emerald-500/30 bg-emerald-500/8 px-5 py-2.5 text-center text-emerald-300">
               ✅ Production-Ready Code
+            </div>
+            <span className="text-slate-600">⬇</span>
+            <div className="w-full max-w-sm rounded-xl border border-purple-500/30 bg-purple-500/8 px-5 py-2.5 text-center text-purple-300">
+              💾 Saved to Supabase
             </div>
           </div>
         </motion.div>
