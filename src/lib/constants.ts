@@ -131,10 +131,10 @@ export const FEATURES = [
     icon: "layers",
   },
   {
-    title: "Intelligent Debugging",
+    title: "Full-Stack App Builder",
     description:
-      "Paste any error or stack trace. INCLAW identifies root causes, explains the fix, and generates corrected code with tests.",
-    icon: "bug",
+      "Build complete apps like Lovable — INCLAW scaffolds projects, writes frontend & backend code, tests in a sandbox, and shows live previews.",
+    icon: "rocket",
   },
   {
     title: "Universal Language Support",
@@ -143,22 +143,22 @@ export const FEATURES = [
     icon: "globe",
   },
   {
-    title: "Chat History with Supabase",
+    title: "Sandbox & Live Preview",
     description:
-      "All conversations are persisted in Supabase. Resume any session, search history, and track your coding evolution over time.",
+      "Execute code in a sandboxed environment, preview websites in real-time, and test apps on phone, PC, and Mac — all from your browser.",
     icon: "database",
   },
   {
-    title: "100% Open Source",
+    title: "Browser & Terminal Access",
     description:
-      "Every model, weight, and line of code is open and auditable. Self-host with Ollama locally or use any cloud inference backend.",
+      "INCLAW can open your browser and terminal (with your permission). It asks before every sensitive action — you stay in control.",
     icon: "unlock",
   },
   {
-    title: "Production-Grade Output",
+    title: "Intelligent Debugging",
     description:
-      "Not toy examples — INCLAW ships clean, tested, documented code following SOLID principles, security best practices, and your team's conventions.",
-    icon: "rocket",
+      "Paste any error or stack trace. INCLAW identifies root causes, explains the fix, and generates corrected code with tests.",
+    icon: "bug",
   },
   {
     title: "Made in India 🇮🇳",

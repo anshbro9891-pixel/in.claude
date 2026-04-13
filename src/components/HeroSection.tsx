@@ -186,6 +186,14 @@ export default function HeroSection() {
             Launch INCLAW Agent
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
+          <Link
+            href="/workspace"
+            className="group flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-8 py-3.5 text-base font-bold text-cyan-300 transition-all hover:bg-cyan-500/20 hover:text-white hover:scale-105"
+          >
+            <Code2 className="h-5 w-5" />
+            Open Workspace
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
           <a
             href="#demo"
             className="flex items-center gap-2 rounded-xl border border-white/10 px-8 py-3.5 text-base font-medium text-slate-300 backdrop-blur-sm transition-all hover:border-orange-500/30 hover:bg-orange-500/5 hover:text-white"
