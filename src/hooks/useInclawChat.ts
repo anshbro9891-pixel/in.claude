@@ -89,8 +89,19 @@ export function useInclawChat() {
           }),
         });
 
-        if (!response.ok || !response.body) {
+        if (!response.body) {
           throw new Error("Chat request failed");
+        }
+
+        if (!response.ok) {
+          const errorText = await response
+            .json()
+            .then((res) => res?.error as string | undefined)
+            .catch(() => undefined);
+          updateAssistant(assistantId, () => errorText || FALLBACK_MESSAGE, currentModel);
+          setModelStatus("offline");
+          setIsLoading(false);
+          return;
         }
 
         const reader = response.body.getReader();
