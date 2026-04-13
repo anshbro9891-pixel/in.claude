@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>INCLAW — India's AI Assistant</title>
+  <meta name="description" content="INCLAW — India's open-source agentic AI assistant. Free, no API key, runs in your browser." />
+
+  <!-- Puter.js SDK (free, no API key needed) -->
+  <script src="https://js.puter.com/v2/"></script>
+
+  <!-- Marked.js for Markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <!-- Highlight.js for syntax highlighting -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css" />
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+
+  <!-- INCLAW Stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Favicon (inline SVG as data URI) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>" />
+</head>
+<body>
+  <div id="app">
+    <!-- ── Header ────────────────────────────── -->
+    <header class="header">
+      <div class="header-left">
+        <div class="header-title">INCLAW</div>
+        <div class="header-subtitle">India's Open-Source AI Assistant</div>
+      </div>
+      <div class="header-right">
+        <div id="model-badge" class="model-badge chat">
+          <span class="dot"></span> Ready
+        </div>
+        <button id="btn-clear" class="btn-clear">Clear Chat</button>
+      </div>
+    </header>
+
+    <!-- ── Chat Area ─────────────────────────── -->
+    <div id="chat-area" class="chat-area">
+      <!-- Welcome Screen -->
+      <div id="welcome" class="welcome">
+        <h2>Welcome to INCLAW</h2>
+        <p>
+          India's most powerful open-source AI assistant — built by Indian engineers for the world.
+          Ask me anything: coding, reasoning, math, or just chat.
+        </p>
+        <p class="tagline">Powered by Puter.js · No API key needed · 100% free</p>
+      </div>
+    </div>
+
+    <!-- ── Input Area ────────────────────────── -->
+    <div class="input-area">
+      <div class="input-wrapper">
+        <textarea
+          id="chat-input"
+          rows="1"
+          placeholder="Ask INCLAW anything..."
+          autocomplete="off"
+        ></textarea>
+        <button id="btn-send" class="btn-send" aria-label="Send message">
+          <!-- Send icon (SVG) -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+        </button>
+      </div>
+      <div class="input-hint">
+        <span>Enter to send · Shift+Enter for new line</span>
+        <span>Open-Source · Made in India</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── App Initialization ──────────────────── -->
+  <script type="module">
+    import { ChatHandler } from "./chat-handler.js";
+
+    /* Configure marked.js for safe HTML rendering */
+    if (typeof marked !== "undefined") {
+      marked.setOptions({
+        breaks: true,
+        gfm: true,
+      });
+    }
+
+    /* Wait for DOM to be fully loaded */
+    document.addEventListener("DOMContentLoaded", () => {
+      /* Grab DOM elements */
+      const chatArea = document.getElementById("chat-area");
+      const modelBadge = document.getElementById("model-badge");
+      const chatInput = document.getElementById("chat-input");
+      const sendBtn = document.getElementById("btn-send");
+      const clearBtn = document.getElementById("btn-clear");
+
+      /* Initialize the ChatHandler */
+      const chat = new ChatHandler({
+        chatArea,
+        modelBadge,
+        input: chatInput,
+        sendBtn,
+      });
+
+      /* ── Send Button Click ──────────────────── */
+      sendBtn.addEventListener("click", () => {
+        const msg = chatInput.value.trim();
+        if (msg) {
+          chatInput.value = "";
+          chatInput.style.height = "auto";
+          chat.send(msg);
+        }
+      });
+
+      /* ── Enter Key to Send ──────────────────── */
+      chatInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          const msg = chatInput.value.trim();
+          if (msg) {
+            chatInput.value = "";
+            chatInput.style.height = "auto";
+            chat.send(msg);
+          }
+        }
+      });
+
+      /* ── Auto-Resize Textarea ───────────────── */
+      chatInput.addEventListener("input", () => {
+        chatInput.style.height = "auto";
+        chatInput.style.height = Math.min(chatInput.scrollHeight, 150) + "px";
+      });
+
+      /* ── Clear Chat Button ──────────────────── */
+      clearBtn.addEventListener("click", () => {
+        chat.clearChat();
+      });
+
+      console.log("[INCLAW] Chat application initialized.");
+      console.log("[INCLAW] Using Puter.js for AI — no API key required.");
+    });
+  </script>
+</body>
+</html>
