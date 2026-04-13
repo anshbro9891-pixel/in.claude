@@ -115,7 +115,8 @@ function bindPaymentForm() {
         created_at: new Date().toISOString()
       });
 
-      status.textContent = `Payment submitted! Ansh will verify your payment via Instagram DM @ansh._.9900 within 24 hours and activate your plan. DM message: INCLAW Payment - ${plan.toUpperCase()} - TXN: ${upi_txn_id} - Email: ${user?.email || document.getElementById('pay-email').value.trim()}`;
+      const email = user?.email || document.getElementById('pay-email').value.trim();
+      status.innerHTML = `\n+        <strong>Payment submitted!</strong><br/>\n+        Ansh will verify via Instagram DM <strong>@ansh._.9900</strong> within 24 hours.<br/>\n+        <small>DM format: INCLAW Payment - ${plan.toUpperCase()} - TXN: ${upi_txn_id} - Email: ${email}</small>\n+      `;
     } catch (error) {
       console.error('[INCLAW] payment submit failed', error);
       status.textContent = `Verification submit failed: ${error.message}`;

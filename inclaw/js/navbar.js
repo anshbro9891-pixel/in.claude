@@ -82,12 +82,11 @@ export function initSharedLayout() {
     const ham = nav.querySelector('#hamburger');
     ham?.addEventListener('click', () => drawer.classList.toggle('open'));
 
+    const logo = nav.querySelector('.brand img');
     setInterval(() => {
-      const logo = nav.querySelector('.brand img');
-      if (logo) {
-        logo.style.animation = 'pulse 1s ease';
-        setTimeout(() => logo.style.animation = '', 1100);
-      }
+      if (!logo) return;
+      logo.classList.add('pulse-now');
+      setTimeout(() => logo.classList.remove('pulse-now'), 1100);
     }, 3000);
   } catch (error) {
     console.error('[INCLAW] Navbar init error', error);

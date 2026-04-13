@@ -1,13 +1,25 @@
 import { callINCLAW } from './puter-backend.js';
 
 let editor;
-let files = { 'index.html': '<h1>Hello INCLAW</h1>', 'style.css': 'body { font-family: sans-serif; }', 'script.js': 'console.log("INCLAW ready")' };
+let files = createInitialFiles();
+
+/**
+ * Returns a fresh default file map for each workspace initialization.
+ */
+function createInitialFiles() {
+  return {
+    'index.html': '<h1>Hello INCLAW</h1>',
+    'style.css': 'body { font-family: sans-serif; }',
+    'script.js': 'console.log("INCLAW ready")'
+  };
+}
 
 /**
  * Boots Monaco editor, explorer actions, and AI assistant in workspace.
  */
 export function initWorkspace() {
   try {
+    files = createInitialFiles();
     initMonaco();
     bindFiles();
     bindTemplates();
@@ -187,7 +199,9 @@ function bindAiActions() {
       for await (const chunk of stream) {
         full += chunk?.message?.content || '';
         box.textContent = full;
-        if (editor && full.length > 20) editor.executeEdits('inclaw', [{ range: editor.getSelection(), text: full }]);
+      }
+      if (editor && full.length > 0) {
+        editor.executeEdits('inclaw', [{ range: editor.getSelection(), text: full }]);
       }
     } catch (error) {
       out.innerHTML += `<div class="card">⚠️ ${error.message}</div>`;

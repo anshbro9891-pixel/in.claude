@@ -175,7 +175,11 @@
     const count = 200;
     const geo = new THREE.BufferGeometry();
     const pos = new Float32Array(count * 3);
-    for (let i=0;i<count;i++){ pos[i*3]=(Math.random()-0.5)*140; pos[i*3+1]=(Math.random()-0.5)*90; pos[i*3+2]=(Math.random()-0.5)*60; }
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 140;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 90;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 60;
+    }
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     const mat = new THREE.PointsMaterial({ color: 0x9df5d7, size: 0.8 });
     const points = new THREE.Points(geo, mat);
