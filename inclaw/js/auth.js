@@ -58,7 +58,10 @@ async function oauth(provider) {
   try {
     const client = getSupabaseClient();
     if (!client) throw new Error('Supabase not configured');
-    const { error } = await client.auth.signInWithOAuth({ provider, options: { redirectTo: location.origin + '/inclaw/dashboard.html' } });
+    const allowedRedirect = new URL('/inclaw/dashboard.html', window.location.origin).toString();
+    const isAllowed = allowedRedirect.startsWith(window.location.origin);
+    if (!isAllowed) throw new Error('Invalid OAuth redirect target');
+    const { error } = await client.auth.signInWithOAuth({ provider, options: { redirectTo: allowedRedirect } });
     if (error) throw error;
   } catch (error) {
     console.error('[INCLAW] OAuth failed', error);

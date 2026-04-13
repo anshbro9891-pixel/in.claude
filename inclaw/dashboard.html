@@ -38,7 +38,20 @@ initSharedLayout(); initRevealAnimations(); initLogoIntro();
       if (data?.user?.email) document.getElementById('user-name').textContent = data.user.email.split('@')[0];
       const { data: chats } = await client.from('chats').select('title,updated_at').order('updated_at',{ascending:false}).limit(4);
       if (chats?.length) {
-        document.getElementById('recent-chats').innerHTML = chats.map(c=>`<article class='card'><strong>${c.title || 'Untitled'}</strong><br/><small>${new Date(c.updated_at).toLocaleString()}</small></article>`).join('');
+        const wrap = document.getElementById('recent-chats');
+        wrap.textContent = '';
+        chats.forEach((c) => {
+          const card = document.createElement('article');
+          card.className = 'card';
+          const title = document.createElement('strong');
+          title.textContent = c.title || 'Untitled';
+          const time = document.createElement('small');
+          time.textContent = new Date(c.updated_at).toLocaleString();
+          card.appendChild(title);
+          card.appendChild(document.createElement('br'));
+          card.appendChild(time);
+          wrap.appendChild(card);
+        });
       }
     }
   } catch (e) { console.error('[INCLAW] dashboard load failed', e); }

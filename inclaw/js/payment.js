@@ -116,7 +116,17 @@ function bindPaymentForm() {
       });
 
       const email = user?.email || document.getElementById('pay-email').value.trim();
-      status.innerHTML = `\n+        <strong>Payment submitted!</strong><br/>\n+        Ansh will verify via Instagram DM <strong>@ansh._.9900</strong> within 24 hours.<br/>\n+        <small>DM format: INCLAW Payment - ${plan.toUpperCase()} - TXN: ${upi_txn_id} - Email: ${email}</small>\n+      `;
+      status.textContent = '';
+      const title = document.createElement('strong');
+      title.textContent = 'Payment submitted!';
+      const line1 = document.createElement('div');
+      line1.textContent = 'Ansh will verify via Instagram DM @ansh._.9900 within 24 hours.';
+      const line2 = document.createElement('small');
+      line2.textContent = `DM format: INCLAW Payment - ${plan.toUpperCase()} - TXN: ${upi_txn_id} - Email: ${email}`;
+      status.appendChild(title);
+      status.appendChild(document.createElement('br'));
+      status.appendChild(line1);
+      status.appendChild(line2);
     } catch (error) {
       console.error('[INCLAW] payment submit failed', error);
       status.textContent = `Verification submit failed: ${error.message}`;

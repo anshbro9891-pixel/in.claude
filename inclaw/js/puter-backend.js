@@ -34,11 +34,11 @@ Format responses with proper markdown. Use code blocks for all code.`;
  */
 async function ensurePuter() {
   try {
-    if (window.puter?.ai?.chat) return;
+    if (typeof window.puter?.ai?.chat === 'function') return;
     await new Promise((resolve, reject) => {
       const started = Date.now();
       const t = setInterval(() => {
-        if (window.puter?.ai?.chat) { clearInterval(t); resolve(); }
+        if (typeof window.puter?.ai?.chat === 'function') { clearInterval(t); resolve(); }
         if (Date.now() - started > 15000) { clearInterval(t); reject(new Error('Puter load timeout')); }
       }, 200);
     });

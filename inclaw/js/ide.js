@@ -83,7 +83,7 @@ function bindFiles() {
   };
 
   document.getElementById('new-file')?.addEventListener('click', () => {
-    const name = prompt('File name?');
+    const name = sanitizeFileName(prompt('File name?') || '');
     if (!name) return;
     files[name] = '';
     render();
@@ -124,7 +124,7 @@ function openFile(name) {
  */
 function renameFile(oldName) {
   try {
-    const next = prompt('Rename to:', oldName);
+    const next = sanitizeFileName(prompt('Rename to:', oldName) || '');
     if (!next || next === oldName) return;
     files[next] = files[oldName];
     delete files[oldName];
@@ -201,7 +201,12 @@ function bindAiActions() {
         box.textContent = full;
       }
       if (editor && full.length > 0) {
-        editor.executeEdits('inclaw', [{ range: editor.getSelection(), text: full }]);
+        const selection = editor.getSelection();
+        const pos = editor.getPosition();
+        const range = selection && !selection.isEmpty()
+          ? selection
+          : new monaco.Range(pos.lineNumber, pos.column, pos.lineNumber, pos.column);
+        editor.executeEdits('inclaw', [{ range, text: full }]);
       }
     } catch (error) {
       out.innerHTML += `<div class="card">⚠️ ${error.message}</div>`;
@@ -249,4 +254,15 @@ async function askInline(message) {
   } catch (error) {
     console.error('[INCLAW] askInline failed', error);
   }
+}
+
+/**
+ * Sanitizes user-provided file names to avoid invalid keys and prototype pollution.
+ */
+function sanitizeFileName(name) {
+  const trimmed = name.trim().replace(/[/\\]/g, '_');
+  if (!trimmed) return '';
+  if (['__proto__', 'prototype', 'constructor'].includes(trimmed)) return '';
+  if (!/^[a-zA-Z0-9._-]+$/.test(trimmed)) return '';
+  return trimmed;
 }

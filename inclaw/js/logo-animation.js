@@ -3,7 +3,12 @@
  */
 export function initLogoIntro() {
   try {
-    const shown = sessionStorage.getItem('inclaw_intro_shown') === 'true';
+    let shown = false;
+    try {
+      shown = sessionStorage.getItem('inclaw_intro_shown') === 'true';
+    } catch (storageError) {
+      console.warn('[INCLAW] Intro sessionStorage read failed', storageError);
+    }
     const overlay = document.getElementById('intro-overlay');
     const content = document.querySelector('.site-shell');
     if (!overlay || !content) return;
