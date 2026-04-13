@@ -67,7 +67,7 @@ export default function InclawLogo({
       {/* Outer hexagon — rotated 30° for "gem" orientation */}
       <polygon
         points="50,4 90,26 90,74 50,96 10,74 10,26"
-        fill="url(#${id}-g1)"
+        fill={`url(#${id}-g1)`}
         opacity="0.12"
         stroke={`url(#${id}-g1)`}
         strokeWidth="1.5"

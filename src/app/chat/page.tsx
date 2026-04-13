@@ -210,7 +210,7 @@ export default function ChatPage() {
 
   /* Animate thinking steps */
   const animateThinking = async (msgId: string): Promise<void> => {
-    const steps = Object.values(THINKING_STEPS).map((label) => ({ label, status: "pending" as const }));
+    const steps: ThinkingStep[] = Object.values(THINKING_STEPS).map((label) => ({ label, status: "pending" as ThinkingStep["status"] }));
 
     const updateSteps = (updated: ThinkingStep[]) => {
       setMessages((prev) =>

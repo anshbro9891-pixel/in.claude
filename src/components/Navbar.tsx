@@ -11,6 +11,7 @@ const NAV_LINKS = [
   { href: "#models",   label: "Models" },
   { href: "#demo",     label: "Demo" },
   { href: "#about",    label: "About" },
+  { href: "/learn",    label: "Learn" },
 ];
 
 export default function Navbar() {
