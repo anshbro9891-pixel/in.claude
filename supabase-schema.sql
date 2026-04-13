@@ -73,3 +73,23 @@ CREATE POLICY "Allow message insert for session owner"
       WHERE s.id = session_id AND s.user_id IS NULL
     )
   );
+
+-- INCLAW memory table for per-user context
+CREATE TABLE IF NOT EXISTS public.inclaw_memory (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     TEXT NOT NULL,
+  session_id  TEXT NOT NULL,
+  role        TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+  content     TEXT NOT NULL,
+  model_used  TEXT,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Usage tracking for rate limiting
+CREATE TABLE IF NOT EXISTS public.inclaw_usage (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       TEXT,
+  message_count INTEGER DEFAULT 0,
+  hour_window   TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
