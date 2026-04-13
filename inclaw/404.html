@@ -1,0 +1,27 @@
+<!doctype html><html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>404 | INCLAW</title>
+<link rel="icon" href="assets/favicon.ico"/><link rel="stylesheet" href="css/global.css"/>
+<style>
+.glitch { font-family: var(--font-mono); font-size: clamp(3rem,11vw,8rem); position:relative; letter-spacing:4px; }
+.glitch::before,.glitch::after { content:'404'; position:absolute; left:0; top:0; }
+.glitch::before { color:#00ffd1; transform:translate(-2px,0); clip-path: inset(0 0 45% 0); animation: g1 .8s infinite linear alternate; }
+.glitch::after { color:#ff2d55; transform:translate(2px,0); clip-path: inset(45% 0 0 0); animation: g2 .8s infinite linear alternate; }
+@keyframes g1 { from{ transform:translate(-3px,0)} to{ transform:translate(3px,0)} }
+@keyframes g2 { from{ transform:translate(3px,0)} to{ transform:translate(-3px,0)} }
+.circuits { position:fixed; inset:0; pointer-events:none; opacity:.2;
+  background-image: linear-gradient(90deg, rgba(29,158,117,.5) 1px, transparent 1px), linear-gradient(rgba(29,158,117,.3) 1px, transparent 1px);
+  background-size: 80px 80px;
+}
+</style>
+</head><body class="grid-bg"><div class="circuits"></div><div class="site-shell"><main style="display:grid;place-items:center;min-height:80vh;text-align:center">
+<img src="assets/logo.png" alt="INCLAW" style="height:72px;margin-bottom:12px"/>
+<div class="glitch">404</div>
+<p>This page got lost in the neural network.</p>
+<a class="btn btn-solid" href="index.html">Return to INCLAW</a>
+</main></div>
+<script type="module">
+import { initSharedLayout } from './js/navbar.js';
+initSharedLayout();
+</script>
+</body></html>

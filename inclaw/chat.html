@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>INCLAW Chat</title>
+  <link rel="icon" href="assets/favicon.ico" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/chat.css" />
+  <script src="https://js.puter.com/v2/"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.45.4/umd/supabase.min.js"></script>
+</head>
+<body class="grid-bg">
+  <div id="intro-overlay" class="intro-overlay">
+    <svg width="140" height="140" viewBox="0 0 200 200" fill="none"><path id="intro-hex" d="M60 25h80l40 75-40 75H60L20 100z" stroke="white" stroke-width="4"/><path id="intro-brain" d="M70 92c0-14 11-25 25-25 7 0 13 3 18 7 5-4 11-7 18-7 14 0 25 11 25 25 0 14-11 25-25 25h-61V92z" fill="#FF2D55"/></svg>
+    <h1 id="intro-title" class="intro-title"></h1><p id="intro-tagline" class="intro-tagline">The AI That Thinks, Codes, Conquers.</p>
+  </div>
+  <div class="site-shell">
+    <main>
+      <section class="chat-layout">
+        <aside class="sidebar glass">
+          <button class="btn btn-solid" id="new-chat-side-btn" style="width:100%">New Chat</button>
+          <input placeholder="Search chats" style="margin:10px 0;width:100%;padding:9px;border-radius:10px;border:1px solid var(--border-glass);background:#0d0d0d;color:#fff" />
+          <div class="chat-list" id="chat-list"></div>
+        </aside>
+
+        <section class="chat-pane glass">
+          <div class="chat-top">
+            <span></span>
+            <select id="model-select">
+              <optgroup label="Auto"><option value="auto">Auto-Route (default)</option></optgroup>
+              <optgroup label="Chat Models"><option value="llama-3.3-70b">Llama 3.3 70B</option><option value="llama-3.1-8b">Llama 3.1 8B (fast)</option><option value="gemma-3">Gemma 3 27B</option><option value="phi-4">Phi-4 14B</option><option value="mixtral">Mixtral 8x7B</option></optgroup>
+              <optgroup label="Code Models"><option value="deepseek-coder">DeepSeek Coder</option><option value="qwen-coder">Qwen2.5 Coder 32B</option><option value="codellama">CodeLlama 34B</option><option value="starcoder2">StarCoder2 15B</option></optgroup>
+              <optgroup label="Reasoning Models"><option value="deepseek-r1">DeepSeek R1</option><option value="llama-3.3-70b">Llama 3.3 70B (reasoning mode)</option></optgroup>
+              <optgroup label="Powerful (Pro/Max)"><option value="gpt-4o-mini">GPT-4o mini (locked)</option><option value="claude-sonnet">Claude Sonnet (locked)</option><option value="gemini-flash">Gemini Flash (locked)</option></optgroup>
+            </select>
+            <button class="btn btn-gradient" id="new-chat-btn">New Chat</button>
+            <button class="btn btn-gradient" id="clear-btn">Clear</button>
+          </div>
+          <div class="messages" id="messages"></div>
+          <div id="typing-indicator" class="typing" style="display:none;padding:0 16px 8px">INCLAW is thinking<span style="animation:blink 1s infinite">...</span></div>
+          <div class="chat-input">
+            <button class="btn btn-gradient" title="Attach">📎</button>
+            <textarea id="chat-text" placeholder="Ask INCLAW anything..."></textarea>
+            <button class="btn btn-gradient" title="Voice">🎙️</button>
+            <button class="btn btn-solid" id="send-btn">Send</button>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initSharedLayout, initRevealAnimations } from './js/navbar.js';
+    import { initLogoIntro } from './js/logo-animation.js';
+    import { initChatPage } from './js/chat-handler.js';
+    import { initAuthUi } from './js/auth.js';
+
+    const params = new URLSearchParams(location.search);
+    const prefill = params.get('q');
+    initSharedLayout(); initRevealAnimations(); initLogoIntro(); initAuthUi(); initChatPage();
+    if (prefill) document.getElementById('chat-text').value = prefill;
+  </script>
+</body>
+</html>

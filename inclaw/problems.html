@@ -1,0 +1,37 @@
+<!doctype html><html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>INCLAW Problems → Solutions</title>
+<link rel="icon" href="assets/favicon.ico"/>
+<link rel="stylesheet" href="css/global.css"/><link rel="stylesheet" href="css/problems.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head><body class="grid-bg">
+<div id="intro-overlay" class="intro-overlay"><svg width="140" height="140" viewBox="0 0 200 200" fill="none"><path id="intro-hex" d="M60 25h80l40 75-40 75H60L20 100z" stroke="white" stroke-width="4"/><path id="intro-brain" d="M70 92c0-14 11-25 25-25 7 0 13 3 18 7 5-4 11-7 18-7 14 0 25 11 25 25 0 14-11 25-25 25h-61V92z" fill="#FF2D55"/></svg><h1 id="intro-title" class="intro-title"></h1><p id="intro-tagline" class="intro-tagline">The AI That Thinks, Codes, Conquers.</p></div>
+<div class="site-shell"><main>
+<h1 class="section-title">Every Developer Problem. One AI Solution.</h1>
+<p class="section-subtitle">Real engineering pain points mapped to production-grade INCLAW workflows.</p>
+<div class="card-grid" id="problem-grid"></div>
+</main></div>
+<script type="module">
+import { initSharedLayout, initRevealAnimations } from './js/navbar.js';
+import { initLogoIntro } from './js/logo-animation.js';
+initSharedLayout(); initLogoIntro();
+const data = [
+['I spend hours debugging code I did not write','Paste error → INCLAW finds root cause + fixes + writes tests','Debug this unknown stacktrace and generate tests'],
+['I do not know which AI model to use','INCLAW auto-routes to best model based on task type','Compare coding model vs reasoning model and route automatically'],
+['Proprietary AI is too expensive','400+ free open-source models via Puter.js, zero API cost','Give free model options for production coding help'],
+['I cannot build full-stack apps alone','INCLAW Workspace — solo builder with IDE + preview + terminal','Scaffold a full-stack app with auth and deployment'],
+['AI gives outdated answers','Web search integration gives real-time knowledge','Find latest API changes and update this code accordingly'],
+['I lose context between chat sessions','Supabase-powered persistent memory across all sessions','Remember this architecture and continue tomorrow'],
+['I need to explain code to my team','INCLAW generates docs, comments, and diagrams automatically','Explain this module and create onboarding docs'],
+['No AI tool supports my language','619+ programming languages via StarCoder2','Generate solution in COBOL and explain edge cases']
+];
+const grid = document.getElementById('problem-grid');
+data.forEach(([p,s,prompt])=>{
+  const card = document.createElement('article');
+  card.className='card problem-card'; card.setAttribute('data-reveal','');
+  card.innerHTML=`<div class='badges'><span class='badge-problem'>Problem</span><span class='badge-solution'>INCLAW Solution</span></div><h3>${p}</h3><p style='color:#c3cac8'>${s}</p><div class='problem-actions'><a class='btn btn-gradient' href='chat.html?q=${encodeURIComponent(prompt)}'>Try This</a></div>`;
+  grid.appendChild(card);
+});
+initRevealAnimations();
+</script>
+</body></html>

@@ -1,0 +1,60 @@
+<!doctype html><html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>INCLAW Dashboard</title>
+<link rel="icon" href="assets/favicon.ico"/><link rel="stylesheet" href="css/global.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.45.4/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+</head><body class="grid-bg"><div id="intro-overlay" class="intro-overlay"><svg width="140" height="140" viewBox="0 0 200 200" fill="none"><path id="intro-hex" d="M60 25h80l40 75-40 75H60L20 100z" stroke="white" stroke-width="4"/><path id="intro-brain" d="M70 92c0-14 11-25 25-25 7 0 13 3 18 7 5-4 11-7 18-7 14 0 25 11 25 25 0 14-11 25-25 25h-61V92z" fill="#FF2D55"/></svg><h1 id="intro-title" class="intro-title"></h1><p id="intro-tagline" class="intro-tagline">The AI That Thinks, Codes, Conquers.</p></div>
+<div class="site-shell"><main>
+  <section class="glass" style="padding:18px" data-reveal>
+    <h1 class="section-title" style="font-size:1.8rem">Welcome back, <span id="user-name">Developer</span></h1>
+    <p>Current plan: <span class="kpi" id="plan-badge">Free</span></p>
+    <div id="upgrade-banner" class="card" style="margin:12px 0">Upgrade to Pro for ₹299/month — Unlock everything</div>
+    <div class="card-grid">
+      <article class="card"><h3>Messages today</h3><p><span id="msg-used">0</span> / <span id="msg-limit">50</span></p></article>
+      <article class="card"><h3>Favorite model</h3><p id="fav-model">deepseek-coder</p></article>
+      <article class="card"><h3>Days active</h3><p id="days-active">1</p></article>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><a class="btn btn-solid" href="chat.html">New Chat</a><a class="btn btn-gradient" href="workspace.html">Open Workspace</a><a class="btn btn-gradient" href="pricing.html">View Plans</a></div>
+    <h3 style="margin-top:16px">Recent chats</h3>
+    <div id="recent-chats" class="card-grid"><article class="card">No saved chats yet.</article></div>
+  </section>
+</main></div>
+<script type="module">
+import { initSharedLayout, initRevealAnimations } from './js/navbar.js';
+import { initLogoIntro } from './js/logo-animation.js';
+import { getSupabaseClient } from './js/supabase.js';
+initSharedLayout(); initRevealAnimations(); initLogoIntro();
+(async()=>{
+  try {
+    const plan = localStorage.getItem('inclaw_plan') || 'free';
+    document.getElementById('plan-badge').textContent = plan[0].toUpperCase()+plan.slice(1);
+    document.getElementById('upgrade-banner').style.display = plan === 'free' ? 'block' : 'none';
+    if (plan !== 'free') document.getElementById('msg-limit').textContent = '∞';
+
+    const client = getSupabaseClient();
+    if (client) {
+      const { data } = await client.auth.getUser();
+      if (data?.user?.email) document.getElementById('user-name').textContent = data.user.email.split('@')[0];
+      const { data: chats } = await client.from('chats').select('title,updated_at').order('updated_at',{ascending:false}).limit(4);
+      if (chats?.length) {
+        const wrap = document.getElementById('recent-chats');
+        wrap.textContent = '';
+        chats.forEach((c) => {
+          const card = document.createElement('article');
+          card.className = 'card';
+          const title = document.createElement('strong');
+          title.textContent = c.title || 'Untitled';
+          const time = document.createElement('small');
+          time.textContent = new Date(c.updated_at).toLocaleString();
+          card.appendChild(title);
+          card.appendChild(document.createElement('br'));
+          card.appendChild(time);
+          wrap.appendChild(card);
+        });
+      }
+    }
+  } catch (e) { console.error('[INCLAW] dashboard load failed', e); }
+})();
+</script>
+</body></html>

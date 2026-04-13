@@ -1,0 +1,6 @@
+.problem-card { padding:18px; }
+.badges { display:flex; gap:8px; margin-bottom:10px; }
+.badge-problem { background:rgba(255,45,85,.16); color:#ff7f9e; border:1px solid rgba(255,45,85,.4); padding:5px 9px; border-radius:999px; font-size:.75rem; }
+.badge-solution { background:rgba(29,158,117,.16); color:#7ceec6; border:1px solid rgba(29,158,117,.4); padding:5px 9px; border-radius:999px; font-size:.75rem; }
+.problem-card:hover { border-color: rgba(29,158,117,.45); box-shadow:0 0 22px rgba(29,158,117,.15); }
+.problem-actions { margin-top:12px; }

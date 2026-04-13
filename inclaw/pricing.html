@@ -1,0 +1,49 @@
+<!doctype html><html lang="en"><head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>INCLAW Pricing</title>
+<link rel="icon" href="assets/favicon.ico"/>
+<link rel="stylesheet" href="css/global.css"/><link rel="stylesheet" href="css/pricing.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.45.4/umd/supabase.min.js"></script>
+</head><body class="grid-bg"><div id="intro-overlay" class="intro-overlay"><svg width="140" height="140" viewBox="0 0 200 200" fill="none"><path id="intro-hex" d="M60 25h80l40 75-40 75H60L20 100z" stroke="white" stroke-width="4"/><path id="intro-brain" d="M70 92c0-14 11-25 25-25 7 0 13 3 18 7 5-4 11-7 18-7 14 0 25 11 25 25 0 14-11 25-25 25h-61V92z" fill="#FF2D55"/></svg><h1 id="intro-title" class="intro-title"></h1><p id="intro-tagline" class="intro-tagline">The AI That Thinks, Codes, Conquers.</p></div>
+<div class="site-shell"><main>
+<h1 class="section-title">Pricing in INR</h1>
+<p class="section-subtitle">Choose monthly or annual (-20%). Pro and Max activate after Instagram DM verification.</p>
+<div class="billing-toggle"><button id="bill-monthly" class="active">Monthly</button><button id="bill-annual">Annual (-20%)</button></div>
+<section class="pricing-grid" data-reveal>
+  <article class="price-card glass"><h3>FREE PLAN</h3><div class="price" data-monthly="0">₹0 <small>/month</small></div><ul><li>50 messages/day</li><li>5 models available</li><li>Basic chat only</li><li>No workspace access</li></ul><button class="btn btn-solid plan-cta" data-plan="free" data-amount="0">Start Free</button></article>
+  <article class="price-card glass"><h3>PRO PLAN</h3><div class="price" data-monthly="299">₹299 <small>/month</small></div><ul><li>Unlimited messages</li><li>All 400+ models</li><li>Full workspace + IDE</li><li>Persistent memory</li></ul><button class="btn btn-gradient plan-cta" data-plan="pro" data-amount="299">Get Pro</button></article>
+  <article class="price-card glass"><h3>MAX PLAN</h3><div class="price" data-monthly="799">₹799 <small>/month</small></div><ul><li>Everything in Pro</li><li>Early access models</li><li>API access</li><li>Direct support from Ansh Kumar</li></ul><button class="btn btn-gradient plan-cta" data-plan="max" data-amount="799">Get Max</button></article>
+</section>
+</main></div>
+
+<div class="modal" id="payment-modal"><div class="modal-card glass">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h3>Complete UPI Payment</h3><button id="modal-close" class="btn btn-gradient">Close</button></div>
+  <div class="modal-grid">
+    <section>
+      <p><strong>Plan:</strong> <span id="pay-plan">PRO</span></p>
+      <p><strong>Amount:</strong> <span id="pay-amount">₹299</span></p>
+      <img id="upi-qr" src="https://github.com/user-attachments/assets/09cd6825-c0c9-4156-837c-ed684035fdb2" alt="UPI QR"/>
+      <p>UPI ID: <strong>ansh74619@okhdfcbank</strong></p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px"><a id="upi-gpay" class="btn btn-gradient" target="_blank">GPay</a><a id="upi-phonepe" class="btn btn-gradient" target="_blank">PhonePe</a><a id="upi-paytm" class="btn btn-gradient" target="_blank">Paytm</a><a id="upi-any" class="btn btn-gradient" target="_blank">Any UPI App</a></div>
+    </section>
+    <section>
+      <form id="payment-form">
+        <div class="field"><label>Email</label><input id="pay-email" type="email" placeholder="you@example.com" required/></div>
+        <div class="field"><label>UPI Transaction ID</label><input id="upi-txn" placeholder="e.g. 412345678901" required/></div>
+        <div class="field"><label>Instagram username</label><input id="ig-handle" placeholder="@yourhandle" required/></div>
+        <button class="btn btn-solid" style="width:100%">I've Paid — Verify My Account</button>
+      </form>
+      <p id="payment-status"></p>
+      <small>DM @ansh._.9900 with: "INCLAW Payment - [Plan] - TXN: [your_txn_id] - Email: [your_email]"</small>
+    </section>
+  </div>
+</div></div>
+
+<script type="module">
+import { initSharedLayout, initRevealAnimations } from './js/navbar.js';
+import { initLogoIntro } from './js/logo-animation.js';
+import { initPricingPage } from './js/payment.js';
+initSharedLayout(); initRevealAnimations(); initLogoIntro(); initPricingPage();
+</script>
+</body></html>

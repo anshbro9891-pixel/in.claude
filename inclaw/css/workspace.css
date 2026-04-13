@@ -1,0 +1,16 @@
+.workspace { display:grid; grid-template-columns:250px 1fr 350px; gap:12px; min-height:75vh; }
+.panel { border:1px solid var(--border-glass); border-radius:var(--radius); background:var(--bg-glass); backdrop-filter: blur(20px); }
+.file-panel { padding:12px; }
+.file-tree { display:flex; flex-direction:column; gap:6px; max-height:60vh; overflow:auto; }
+.file-row { display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,.03); padding:8px; border-radius:8px; }
+.editor-panel { display:flex; flex-direction:column; }
+.toolbar { display:flex; flex-wrap:wrap; gap:8px; padding:10px; border-bottom:1px solid var(--border-glass); }
+#editor { height: 58vh; }
+.bottom-tabs { border-top:1px solid var(--border-glass); padding:10px; }
+.assistant-panel { display:flex; flex-direction:column; }
+.assistant-actions { display:flex; flex-wrap:wrap; gap:6px; padding:10px; }
+#ide-chat { flex:1; overflow:auto; padding:10px; min-height:320px; }
+#ide-input { width:100%; padding:10px; border-radius:10px; border:1px solid var(--border-glass); background:#0f0f0f; color:#fff; }
+@media (max-width: 1200px) {
+  .workspace { grid-template-columns:1fr; }
+}
