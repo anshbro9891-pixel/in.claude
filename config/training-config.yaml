@@ -1,0 +1,273 @@
+# INCLAW Training Configuration
+
+# ═══════════════════════════════════════════════════════════════
+# INCLAW — Complete Training Hyperparameters
+# ═══════════════════════════════════════════════════════════════
+
+# ─────────────────────────────────────────────
+# Stage 1: Pre-Training
+# ─────────────────────────────────────────────
+pre_training:
+  # Data
+  total_tokens: 5_000_000_000_000  # 5T tokens
+  data_mix:
+    web_text: 0.60
+    educational: 0.15
+    code: 0.10
+    scientific: 0.05
+    wikipedia: 0.03
+    math: 0.03
+    books: 0.02
+    conversation: 0.02
+  
+  # Optimization
+  optimizer: "adamw"
+  learning_rate: 3.0e-4
+  min_learning_rate: 3.0e-5
+  lr_scheduler: "cosine"
+  warmup_steps: 2000
+  weight_decay: 0.1
+  adam_beta1: 0.9
+  adam_beta2: 0.95
+  adam_epsilon: 1.0e-8
+  gradient_clip_norm: 1.0
+  
+  # Batch size
+  global_batch_size: 4_194_304     # 4M tokens
+  micro_batch_size: 4              # Per GPU
+  gradient_accumulation_steps: 32
+  
+  # Sequence
+  max_seq_length: 8192             # Pre-training context
+  
+  # Precision
+  mixed_precision: "bf16"
+  
+  # Parallelism
+  tensor_parallel_size: 8
+  pipeline_parallel_size: 4
+  data_parallel_size: 16
+  sequence_parallel: true
+  
+  # Infrastructure
+  num_gpus: 512
+  gpu_type: "H100_80GB"
+  
+  # Checkpointing
+  save_interval: 1000              # Steps
+  eval_interval: 500
+  log_interval: 10
+  
+  # Activation checkpointing (save memory)
+  activation_checkpointing: true
+  recompute_granularity: "selective"
+
+# ─────────────────────────────────────────────
+# Stage 2: Supervised Fine-Tuning (SFT)
+# ─────────────────────────────────────────────
+sft:
+  # Data
+  datasets:
+    - name: "tulu-3-sft-mixture"
+      weight: 0.30
+    - name: "OpenHermes-2.5"
+      weight: 0.20
+    - name: "WildChat-1M"
+      weight: 0.15
+    - name: "code-instruction-mix"
+      weight: 0.15
+    - name: "UltraChat-200K"
+      weight: 0.10
+    - name: "Magpie-Pro-300K"
+      weight: 0.05
+    - name: "math-instruction-mix"
+      weight: 0.05
+  
+  # Optimization
+  optimizer: "adamw"
+  learning_rate: 2.0e-5
+  lr_scheduler: "cosine"
+  warmup_ratio: 0.03
+  weight_decay: 0.0
+  
+  # Training
+  epochs: 2
+  global_batch_size: 128
+  micro_batch_size: 2
+  max_seq_length: 8192
+  
+  # Precision
+  mixed_precision: "bf16"
+  gradient_checkpointing: true
+  
+  # Framework
+  framework: "huggingface_trl"
+  trainer: "SFTTrainer"
+  
+  # Compute
+  num_gpus: 64
+  estimated_time: "3 days"
+
+# ─────────────────────────────────────────────
+# Stage 3: Vision Integration
+# ─────────────────────────────────────────────
+vision_alignment:
+  # Phase A: Projector warmup
+  phase_a:
+    datasets:
+      - "ShareGPT4V-PT"
+      - "ALLaVA-Caption"
+    trainable_modules: ["vision_adapter"]
+    frozen_modules: ["vision_encoder", "language_model"]
+    learning_rate: 1.0e-3
+    epochs: 1
+    batch_size: 256
+    num_gpus: 16
+    estimated_time: "12 hours"
+  
+  # Phase B: Full multimodal tuning
+  phase_b:
+    datasets:
+      - name: "LLaVA-OneVision-Data"
+        weight: 0.35
+      - name: "Docmatix"
+        weight: 0.15
+      - name: "ShareGPT4V"
+        weight: 0.10
+      - name: "Cambrian-7M-subset"
+        weight: 0.10
+      - name: "text-only-sft-mix"
+        weight: 0.30    # Prevent forgetting
+    trainable_modules: ["all"]
+    llm_learning_rate: 2.0e-5
+    vision_learning_rate: 2.0e-6
+    adapter_learning_rate: 2.0e-5
+    epochs: 1
+    batch_size: 128
+    max_visual_tokens: 3328
+    max_total_tokens: 8192
+    num_gpus: 64
+    estimated_time: "5 days"
+
+# ─────────────────────────────────────────────
+# Stage 4: DPO Alignment
+# ─────────────────────────────────────────────
+dpo:
+  datasets:
+    - name: "tulu-3-pref-mixture"
+      weight: 0.35
+    - name: "ultrafeedback_binarized"
+      weight: 0.25
+    - name: "hh-rlhf"
+      weight: 0.20
+    - name: "skywork-reward-80k"
+      weight: 0.10
+    - name: "vision-preference-data"
+      weight: 0.10
+  
+  # DPO hyperparameters
+  optimizer: "adamw"
+  learning_rate: 5.0e-7
+  beta: 0.1                       # DPO temperature
+  lr_scheduler: "cosine"
+  warmup_ratio: 0.1
+  weight_decay: 0.0
+  
+  # Training
+  epochs: 1
+  global_batch_size: 64
+  micro_batch_size: 1
+  max_seq_length: 4096
+  max_prompt_length: 2048
+  
+  # Framework
+  framework: "huggingface_trl"
+  trainer: "DPOTrainer"
+  loss_type: "sigmoid"            # Standard DPO loss
+  
+  # Compute
+  num_gpus: 64
+  estimated_time: "2 days"
+
+# ─────────────────────────────────────────────
+# Stage 5: Safety Alignment
+# ─────────────────────────────────────────────
+safety:
+  method: "safety_dpo"
+  datasets:
+    - "BeaverTails"
+    - "WildGuard"
+    - "HH-RLHF-harmlessness"
+    - "custom-safety-pairs"
+  
+  learning_rate: 1.0e-7
+  beta: 0.05                      # More conservative for safety
+  epochs: 1
+  batch_size: 32
+  
+  num_gpus: 32
+  estimated_time: "1 day"
+
+# ─────────────────────────────────────────────
+# Stage 6: Agentic Fine-Tuning
+# ─────────────────────────────────────────────
+agentic:
+  datasets:
+    - name: "agent-flan"
+      weight: 0.25
+    - name: "toolbench"
+      weight: 0.25
+    - name: "fireact-traces"
+      weight: 0.15
+    - name: "swe-bench-traces"
+      weight: 0.20
+    - name: "custom-agent-trajectories"
+      weight: 0.15
+  
+  learning_rate: 1.0e-5
+  epochs: 2
+  batch_size: 64
+  max_seq_length: 16384           # Agent traces can be long
+  
+  # Agent-specific training
+  trajectory_format: "react"      # Thought → Action → Observation
+  reward_signal: "task_completion" # Binary: did the agent succeed?
+  
+  num_gpus: 64
+  estimated_time: "3 days"
+
+# ─────────────────────────────────────────────
+# Evaluation Configuration
+# ─────────────────────────────────────────────
+evaluation:
+  # Run after each training stage
+  
+  text_benchmarks:
+    tool: "lm-evaluation-harness"
+    tasks:
+      - mmlu (target: ≥90%)
+      - hellaswag (target: ≥87%)
+      - arc_challenge (target: ≥70%)
+      - gsm8k (target: ≥90%)
+      - humaneval (target: ≥90%)
+      - math (target: ≥80%)
+      - gpqa (target: ≥60%)
+  
+  vision_benchmarks:
+    tool: "VLMEvalKit"
+    tasks:
+      - mmmu (target: ≥70%)
+      - mathvista (target: ≥70%)
+      - docvqa (target: ≥93%)
+      - chartqa (target: ≥88%)
+      - ocrbench (target: ≥850)
+  
+  agentic_benchmarks:
+    - swe_bench_verified (target: ≥70%)
+    - tau_bench (target: ≥75%)
+    - tool_use_accuracy (target: ≥90%)
+  
+  safety_benchmarks:
+    - xstest_refusal_rate (target: <10% over-refusal)
+    - harmbench_resistance (target: >95%)
+    - toxigen_detection (target: >90%)
