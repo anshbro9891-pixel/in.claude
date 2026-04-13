@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { SUPPORTED_MODELS } from "@/lib/constants";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -8,90 +9,168 @@ interface ChatMessage {
 interface ChatRequest {
   messages: ChatMessage[];
   model: string;
+  stream?: boolean;
+}
+
+const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434";
+
+/**
+ * Check if Ollama is reachable
+ */
+async function isOllamaAvailable(): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch(`${OLLAMA_URL}/api/tags`, { signal: controller.signal });
+    clearTimeout(timeout);
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 /**
- * INCLAW Chat API
+ * INCLAW Agentic Chat API
  *
- * In production, this would route to actual open-source LLM inference backends:
- * - Ollama (local) — supports CodeLlama, DeepSeek, Mixtral, Llama3, etc.
- * - HuggingFace Inference API — for StarCoder2, CodeLlama, etc.
- * - vLLM / TGI — for high-throughput serving
- * - Together AI / Replicate — for cloud-hosted open models
- *
- * This demo implementation provides intelligent code responses to showcase
- * the INCLAW agent's capabilities.
+ * Routes to Ollama when available, with intelligent fallback.
+ * Supports streaming for real-time response delivery.
  */
+export async function POST(request: NextRequest) {
+  try {
+    const body: ChatRequest = await request.json();
+    const { messages, model, stream } = body;
 
-const CODE_TEMPLATES: Record<string, string> = {
-  python: `\`\`\`python
-def solution():
-    """
-    INCLAW-generated solution
-    Clean, efficient, production-ready Python code.
-    """
-    pass
-\`\`\``,
-  javascript: `\`\`\`javascript
-/**
- * INCLAW-generated solution
- * Modern, clean JavaScript following best practices.
- */
-function solution() {
-  // Implementation
-}
-\`\`\``,
-  rust: `\`\`\`rust
-/// INCLAW-generated solution
-/// Safe, fast, idiomatic Rust code.
-fn solution() {
-    // Implementation
-}
-\`\`\``,
-};
+    if (!messages || messages.length === 0) {
+      return NextResponse.json({ error: "Messages are required" }, { status: 400 });
+    }
 
-function generateResponse(messages: ChatMessage[], model: string): string {
+    // Resolve model info
+    const modelInfo = SUPPORTED_MODELS.find((m) => m.id === model || m.ollamaTag === model);
+    const ollamaTag = modelInfo?.ollamaTag || model || "qwen2.5-coder:32b";
+    const modelName = modelInfo?.name || model;
+
+    // System prompt for agentic behavior
+    const systemMessage = {
+      role: "system" as const,
+      content: `You are INCLAW (Intelligent Neural Cognitive Learning Agent Workflow), an advanced autonomous AI coding agent built in India.
+
+Your capabilities:
+- Write, debug, and optimize code in 619+ programming languages
+- Build full-stack applications (Next.js, React, Vue, Express, FastAPI, etc.)
+- Execute code, manage files, install packages
+- Create, test, and deploy complete projects
+- Explain complex concepts clearly
+
+Rules:
+- Write clean, production-ready code with proper error handling
+- Include helpful comments and documentation
+- Always consider security and performance
+- If a task is complex, break it into steps and explain your plan
+- Use modern best practices and patterns
+- When generating full-stack apps, include both frontend and backend
+- For tool use, output tool calls in <tool_call> format`,
+    };
+
+    const fullMessages = [systemMessage, ...messages.map((m) => ({ role: m.role, content: m.content }))];
+
+    // Try Ollama first
+    const ollamaAvailable = await isOllamaAvailable();
+
+    if (ollamaAvailable) {
+      if (stream) {
+        // Streaming response
+        const ollamaRes = await fetch(`${OLLAMA_URL}/api/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model: ollamaTag, messages: fullMessages, stream: true }),
+        });
+
+        if (!ollamaRes.ok || !ollamaRes.body) {
+          return NextResponse.json({ error: "Ollama streaming failed" }, { status: 502 });
+        }
+
+        // Pass through the stream
+        return new NextResponse(ollamaRes.body, {
+          headers: {
+            "Content-Type": "application/x-ndjson",
+            "Transfer-Encoding": "chunked",
+            "Cache-Control": "no-cache",
+          },
+        });
+      }
+
+      // Non-streaming response
+      try {
+        const ollamaRes = await fetch(`${OLLAMA_URL}/api/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ model: ollamaTag, messages: fullMessages, stream: false }),
+        });
+
+        if (ollamaRes.ok) {
+          const data = await ollamaRes.json();
+          return NextResponse.json({
+            content: data.message?.content || "",
+            model: ollamaTag,
+            backend: "ollama",
+            usage: {
+              prompt_tokens: data.prompt_eval_count || 0,
+              completion_tokens: data.eval_count || 0,
+              total_duration: data.total_duration || 0,
+            },
+          });
+        }
+      } catch {
+        // Fall through to built-in response
+      }
+    }
+
+    // Fallback: Built-in intelligent response generator
+    const content = generateAgenticResponse(messages, model, modelName);
+
+    return NextResponse.json({
+      content,
+      model: ollamaTag,
+      backend: "inclaw-builtin",
+      usage: {
+        prompt_tokens: messages.reduce((acc, m) => acc + m.content.split(" ").length, 0),
+        completion_tokens: content.split(" ").length,
+      },
+    });
+  } catch {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+/* ── Built-in intelligent response generator ───────────────────── */
+
+function generateAgenticResponse(messages: ChatMessage[], model: string, modelName: string): string {
   const lastMessage = messages[messages.length - 1];
   const prompt = lastMessage.content.toLowerCase();
 
-  // Detect programming language from prompt
+  // Language detection
   const langMap: Record<string, string> = {
-    python: "python",
-    py: "python",
-    javascript: "javascript",
-    js: "javascript",
-    typescript: "typescript",
-    ts: "typescript",
-    java: "java",
-    rust: "rust",
-    go: "go",
-    golang: "go",
-    "c++": "cpp",
-    cpp: "cpp",
-    ruby: "ruby",
-    php: "php",
-    swift: "swift",
-    kotlin: "kotlin",
-    sql: "sql",
-    react: "javascript",
-    node: "javascript",
-    express: "javascript",
-    django: "python",
-    flask: "python",
-    fastapi: "python",
+    python: "python", py: "python", javascript: "javascript", js: "javascript",
+    typescript: "typescript", ts: "typescript", java: "java", rust: "rust",
+    go: "go", golang: "go", "c++": "cpp", cpp: "cpp", ruby: "ruby",
+    php: "php", swift: "swift", kotlin: "kotlin", sql: "sql",
+    react: "typescript", node: "javascript", express: "javascript",
+    django: "python", flask: "python", fastapi: "python", vue: "typescript",
   };
 
   let detectedLang = "python";
   for (const [keyword, lang] of Object.entries(langMap)) {
-    if (prompt.includes(keyword)) {
-      detectedLang = lang;
-      break;
-    }
+    if (prompt.includes(keyword)) { detectedLang = lang; break; }
   }
 
-  // Pattern matching for common coding requests
+  // Full-stack app requests
+  if (prompt.match(/build|create|make/i) && prompt.match(/app|website|project|full.?stack/i)) {
+    return generateFullStackResponse(modelName);
+  }
+
+  // Sorting / linked list
   if (prompt.includes("sort") && prompt.includes("linked list")) {
-    return `I'll implement a merge sort for a linked list — it's the most efficient approach with O(n log n) time complexity.
+    return `I'll implement a merge sort for a linked list — the most efficient approach with O(n log n) time.
 
 \`\`\`python
 class ListNode:
@@ -104,7 +183,6 @@ def sort_linked_list(head: ListNode) -> ListNode:
     if not head or not head.next:
         return head
     
-    # Split the list into two halves
     slow, fast = head, head.next
     while fast and fast.next:
         slow = slow.next
@@ -113,11 +191,9 @@ def sort_linked_list(head: ListNode) -> ListNode:
     mid = slow.next
     slow.next = None
     
-    # Recursively sort both halves
     left = sort_linked_list(head)
     right = sort_linked_list(mid)
     
-    # Merge sorted halves
     dummy = ListNode(0)
     current = dummy
     while left and right:
@@ -133,159 +209,76 @@ def sort_linked_list(head: ListNode) -> ListNode:
     return dummy.next
 \`\`\`
 
-**Time Complexity:** O(n log n) — optimal for comparison-based sorting
-**Space Complexity:** O(log n) — for the recursion stack
+**Time:** O(n log n) | **Space:** O(log n)
+Want me to add tests or implement in another language?
 
-This uses the slow/fast pointer technique to find the middle, then recursively sorts and merges. Want me to add unit tests or implement this in another language?`;
+*— ${modelName} via INCLAW*`;
   }
 
-  if (prompt.includes("merge") && prompt.includes("sorted")) {
-    return `Here's an efficient solution to merge two sorted linked lists:
-
-\`\`\`python
-class ListNode:
-    def __init__(self, val=0, next=None):
-        self.val = val
-        self.next = next
-
-def merge_sorted_lists(l1: ListNode, l2: ListNode) -> ListNode:
-    """Merge two sorted linked lists into one sorted list."""
-    dummy = ListNode(0)
-    current = dummy
-    
-    while l1 and l2:
-        if l1.val <= l2.val:
-            current.next = l1
-            l1 = l1.next
-        else:
-            current.next = l2
-            l2 = l2.next
-        current = current.next
-    
-    # Attach remaining nodes
-    current.next = l1 if l1 else l2
-    return dummy.next
-
-# Example usage
-# List 1: 1 -> 3 -> 5
-# List 2: 2 -> 4 -> 6
-# Result: 1 -> 2 -> 3 -> 4 -> 5 -> 6
-\`\`\`
-
-**Complexity:** O(n + m) time, O(1) extra space — we reuse existing nodes.
-
-The dummy node pattern simplifies edge case handling. Want me to add a recursive version or implement this in a different language?`;
-  }
-
+  // React hooks
   if (prompt.includes("react") && prompt.includes("hook")) {
-    return `Here's a custom React hook for infinite scrolling with intersection observer:
+    return `Here's a production-ready custom React hook:
 
 \`\`\`typescript
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
-interface UseInfiniteScrollOptions<T> {
-  fetchFn: (page: number) => Promise<T[]>;
-  initialPage?: number;
-  threshold?: number;
+interface UseFetchOptions<T> {
+  url: string;
+  initialData?: T;
+  enabled?: boolean;
 }
 
-interface UseInfiniteScrollReturn<T> {
-  items: T[];
-  isLoading: boolean;
+interface UseFetchReturn<T> {
+  data: T | undefined;
+  loading: boolean;
   error: Error | null;
-  hasMore: boolean;
-  sentinelRef: (node: HTMLElement | null) => void;
-  reset: () => void;
+  refetch: () => Promise<void>;
 }
 
-export function useInfiniteScroll<T>({
-  fetchFn,
-  initialPage = 1,
-  threshold = 0.5,
-}: UseInfiniteScrollOptions<T>): UseInfiniteScrollReturn<T> {
-  const [items, setItems] = useState<T[]>([]);
-  const [page, setPage] = useState(initialPage);
-  const [isLoading, setIsLoading] = useState(false);
+export function useFetch<T>({ url, initialData, enabled = true }: UseFetchOptions<T>): UseFetchReturn<T> {
+  const [data, setData] = useState<T | undefined>(initialData);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [hasMore, setHasMore] = useState(true);
-  const observer = useRef<IntersectionObserver | null>(null);
+  const abortRef = useRef<AbortController>();
 
-  const sentinelRef = useCallback(
-    (node: HTMLElement | null) => {
-      if (isLoading) return;
-      if (observer.current) observer.current.disconnect();
+  const fetchData = useCallback(async () => {
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
 
-      observer.current = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting && hasMore) {
-            setPage((prev) => prev + 1);
-          }
-        },
-        { threshold }
-      );
+    setLoading(true);
+    setError(null);
 
-      if (node) observer.current.observe(node);
-    },
-    [isLoading, hasMore, threshold]
-  );
+    try {
+      const res = await fetch(url, { signal: abortRef.current.signal });
+      if (!res.ok) throw new Error(\`HTTP \${res.status}\`);
+      const json = await res.json();
+      setData(json);
+    } catch (err) {
+      if (err instanceof Error && err.name !== 'AbortError') {
+        setError(err);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [url]);
 
   useEffect(() => {
-    const loadMore = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const newItems = await fetchFn(page);
-        if (newItems.length === 0) {
-          setHasMore(false);
-        } else {
-          setItems((prev) => [...prev, ...newItems]);
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Failed to fetch'));
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (enabled) fetchData();
+    return () => abortRef.current?.abort();
+  }, [fetchData, enabled]);
 
-    loadMore();
-  }, [page, fetchFn]);
-
-  const reset = useCallback(() => {
-    setItems([]);
-    setPage(initialPage);
-    setHasMore(true);
-    setError(null);
-  }, [initialPage]);
-
-  return { items, isLoading, error, hasMore, sentinelRef, reset };
+  return { data, loading, error, refetch: fetchData };
 }
 \`\`\`
 
-**Usage example:**
-\`\`\`tsx
-function PostsList() {
-  const { items, isLoading, sentinelRef } = useInfiniteScroll({
-    fetchFn: async (page) => {
-      const res = await fetch(\`/api/posts?page=\${page}\`);
-      return res.json();
-    },
-  });
+**Features:** Auto-fetch, abort on unmount, refetch function, loading/error states, generic typing.
 
-  return (
-    <div>
-      {items.map((post) => <PostCard key={post.id} post={post} />)}
-      <div ref={sentinelRef} />
-      {isLoading && <Spinner />}
-    </div>
-  );
-}
-\`\`\`
-
-This hook uses the Intersection Observer API for efficient scroll detection. It's fully typed, handles errors, supports reset, and cleans up observers automatically.`;
+*— ${modelName} via INCLAW*`;
   }
 
+  // Rate limiting
   if (prompt.includes("rate limit")) {
-    return `Here's a Redis-based rate limiter using the sliding window algorithm:
+    return `Here's a Redis-based sliding window rate limiter:
 
 \`\`\`go
 package ratelimiter
@@ -298,272 +291,242 @@ import (
 \t"github.com/redis/go-redis/v9"
 )
 
-// RateLimiter implements a sliding window rate limiter using Redis.
 type RateLimiter struct {
-\tclient   *redis.Client
-\tlimit    int
-\twindow   time.Duration
+\tclient *redis.Client
+\tlimit  int
+\twindow time.Duration
 }
 
-// New creates a new RateLimiter.
 func New(client *redis.Client, limit int, window time.Duration) *RateLimiter {
-\treturn &RateLimiter{
-\t\tclient: client,
-\t\tlimit:  limit,
-\t\twindow: window,
-\t}
+\treturn &RateLimiter{client: client, limit: limit, window: window}
 }
 
-// Allow checks if a request from the given key is allowed.
 func (rl *RateLimiter) Allow(ctx context.Context, key string) (bool, error) {
 \tnow := time.Now().UnixMicro()
 \twindowStart := now - rl.window.Microseconds()
 \tredisKey := fmt.Sprintf("ratelimit:%s", key)
 
 \tpipe := rl.client.Pipeline()
-
-\t// Remove expired entries
 \tpipe.ZRemRangeByScore(ctx, redisKey, "0", fmt.Sprintf("%d", windowStart))
-
-\t// Count current window
 \tcountCmd := pipe.ZCard(ctx, redisKey)
-
-\t// Add current request
 \tpipe.ZAdd(ctx, redisKey, redis.Z{Score: float64(now), Member: now})
-
-\t// Set TTL
 \tpipe.Expire(ctx, redisKey, rl.window)
 
 \t_, err := pipe.Exec(ctx)
 \tif err != nil {
 \t\treturn false, fmt.Errorf("redis pipeline error: %w", err)
 \t}
-
-\tcount := countCmd.Val()
-\treturn count < int64(rl.limit), nil
+\treturn countCmd.Val() < int64(rl.limit), nil
 }
 \`\`\`
 
-**Usage:**
-\`\`\`go
-limiter := ratelimiter.New(redisClient, 100, time.Minute)
-
-// In your HTTP middleware
-func RateLimitMiddleware(limiter *ratelimiter.RateLimiter) func(http.Handler) http.Handler {
-\treturn func(next http.Handler) http.Handler {
-\t\treturn http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-\t\t\tallowed, err := limiter.Allow(r.Context(), r.RemoteAddr)
-\t\t\tif err != nil || !allowed {
-\t\t\t\thttp.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
-\t\t\t\treturn
-\t\t\t}
-\t\t\tnext.ServeHTTP(w, r)
-\t\t})
-\t}
-}
-\`\`\`
-
-This uses Redis sorted sets for a **sliding window** approach — more accurate than fixed windows. Each request is scored by timestamp, and expired entries are pruned atomically using a pipeline.`;
+*— ${modelName} via INCLAW*`;
   }
 
-  if (
-    prompt.includes("api") &&
-    (prompt.includes("express") || prompt.includes("rest"))
-  ) {
-    return `Here's a production-ready REST API with JWT authentication in Express.js:
+  // API/Express
+  if (prompt.includes("api") && (prompt.includes("express") || prompt.includes("rest"))) {
+    return `Here's a production-ready REST API with Express.js:
 
 \`\`\`javascript
 import express from 'express';
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
-import { body, validationResult } from 'express-validator';
+import cors from 'cors';
+import helmet from 'helmet';
 
 const app = express();
-app.use(express.json());
+app.use(helmet());
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change-in-production';
-const SALT_ROUNDS = 12;
+const items = new Map();
 
-// In-memory store (replace with database in production)
-const users = new Map();
-
-// Auth middleware
-function authenticate(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
-
-  try {
-    const token = authHeader.split(' ')[1];
-    req.user = jwt.verify(token, JWT_SECRET);
-    next();
-  } catch {
-    res.status(403).json({ error: 'Invalid or expired token' });
-  }
-}
-
-// POST /auth/register
-app.post('/auth/register',
-  body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 8 }),
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { email, password } = req.body;
-
-    if (users.has(email)) {
-      return res.status(409).json({ error: 'User already exists' });
-    }
-
-    const hash = await bcrypt.hash(password, SALT_ROUNDS);
-    users.set(email, { email, password: hash });
-
-    const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '24h' });
-    res.status(201).json({ token, user: { email } });
-  }
-);
-
-// POST /auth/login
-app.post('/auth/login', async (req, res) => {
-  const { email, password } = req.body;
-  const user = users.get(email);
-
-  if (!user || !(await bcrypt.compare(password, user.password))) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '24h' });
-  res.json({ token, user: { email } });
+app.get('/api/items', (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+  const all = Array.from(items.values());
+  const start = (page - 1) * limit;
+  res.json({ data: all.slice(start, start + limit), total: all.length, page });
 });
 
-// GET /api/profile (protected)
-app.get('/api/profile', authenticate, (req, res) => {
-  res.json({ user: req.user });
+app.post('/api/items', (req, res) => {
+  const { name, description } = req.body;
+  if (!name) return res.status(400).json({ error: 'Name required' });
+  const id = crypto.randomUUID();
+  const item = { id, name, description: description || '', createdAt: new Date() };
+  items.set(id, item);
+  res.status(201).json(item);
 });
 
-app.listen(3000, () => console.log('🚀 Server running on port 3000'));
+app.get('/api/items/:id', (req, res) => {
+  const item = items.get(req.params.id);
+  if (!item) return res.status(404).json({ error: 'Not found' });
+  res.json(item);
+});
+
+app.delete('/api/items/:id', (req, res) => {
+  if (!items.delete(req.params.id)) return res.status(404).json({ error: 'Not found' });
+  res.status(204).send();
+});
+
+app.listen(3000, () => console.log('🚀 API on http://localhost:3000'));
 \`\`\`
 
-**Key features:**
-- Password hashing with bcrypt (12 salt rounds)
-- JWT tokens with 24h expiration
-- Input validation with express-validator
-- Clean error responses
-- Auth middleware pattern
-
-Want me to add refresh tokens, role-based access, or database integration?`;
+*— ${modelName} via INCLAW*`;
   }
 
-  // Generic coding response
-  const modelName =
-    SUPPORTED_MODELS.find((m) => m.id === model)?.name || model;
-
-  if (
-    prompt.includes("explain") ||
-    prompt.includes("how does") ||
-    prompt.includes("what is")
-  ) {
-    return `Great question! Let me break this down for you.
+  // Explanation
+  if (prompt.match(/explain|what\s+is|how\s+does|describe|teach/)) {
+    return `Great question! Let me break this down.
 
 ${lastMessage.content.charAt(0).toUpperCase() + lastMessage.content.slice(1)} — here's a clear explanation:
 
 **Key Concepts:**
-1. **Core Idea** — The fundamental principle behind this involves understanding the underlying data structures and algorithms at play.
-2. **How It Works** — The mechanism operates by processing inputs through well-defined stages, each optimized for specific operations.
-3. **Best Practices** — When implementing this, ensure you handle edge cases, write comprehensive tests, and follow established patterns.
+1. **Core Idea** — The fundamental principle involves understanding the data structures and algorithms at play.
+2. **How It Works** — The mechanism processes inputs through well-defined stages, each optimized for specific operations.
+3. **Best Practices** — Handle edge cases, write tests, and follow established patterns.
 
-**In Practice:**
 \`\`\`${detectedLang}
 // Example demonstrating the concept
-// This is a simplified illustration
+// Connect INCLAW to Ollama for full AI-powered explanations
 \`\`\`
 
-Would you like me to dive deeper into any specific aspect, or would you prefer a complete implementation?
+Would you like me to dive deeper or provide a complete implementation?
 
-*— Generated by ${modelName} via INCLAW*`;
+*— ${modelName} via INCLAW*`;
   }
 
-  // Default: generate code
-  const template =
-    CODE_TEMPLATES[detectedLang] || CODE_TEMPLATES["python"];
-
+  // Default code generation
   return `I'll help you with that! Here's my approach:
 
-**Plan:**
-1. Analyze the requirements
-2. Choose the optimal algorithm/pattern
+**🧠 Analyzing:** Breaking down your request...
+**📋 Plan:**
+1. Parse requirements and constraints
+2. Select optimal algorithm/pattern
 3. Implement with clean, documented code
-4. Consider edge cases
+4. Handle edge cases and errors
 
-${template}
+\`\`\`${detectedLang}
+// INCLAW Agent — ${modelName}
+// Full AI-powered code generation available with Ollama
+//
+// Setup for full capabilities:
+// 1. Install: curl -fsSL https://ollama.com/install.sh | sh
+// 2. Pull: ollama pull ${SUPPORTED_MODELS.find((m) => m.id === model)?.ollamaTag || "qwen2.5-coder:32b"}
+// 3. INCLAW auto-detects and connects
+\`\`\`
 
-I've generated a foundation based on your request. In the full version of INCLAW, this would be a complete, runnable solution using **${modelName}**.
+**🚀 To unlock full INCLAW intelligence:**
+Install Ollama and pull a model — INCLAW will automatically use real AI inference.
 
-**To get full inference capabilities**, connect INCLAW to one of these backends:
-- **Ollama** (local) — \`ollama run codellama:34b\`
-- **HuggingFace Inference API** — cloud-hosted models
-- **vLLM / TGI** — for production deployment
-- **Together AI** — managed open-source models
-
-Would you like me to elaborate on the implementation or try a different approach?
-
-*— Generated by ${modelName} via INCLAW*`;
+*— ${modelName} via INCLAW*`;
 }
 
-import { SUPPORTED_MODELS } from "@/lib/constants";
+function generateFullStackResponse(modelName: string): string {
+  return `# 🏗️ INCLAW Full-Stack App Generator
+
+## Architecture
+- **Frontend:** Next.js + TypeScript + Tailwind CSS
+- **Backend:** API Routes + Supabase
+- **Database:** PostgreSQL via Supabase
+
+### Database Schema
+
+\`\`\`sql
+CREATE TABLE users (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE projects (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  status TEXT DEFAULT 'draft',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+\`\`\`
+
+### API Route
+
+\`\`\`typescript
+// src/app/api/projects/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_KEY!
+);
+
+export async function GET() {
+  const { data, error } = await supabase
+    .from('projects')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
+}
 
 export async function POST(request: NextRequest) {
-  try {
-    const body: ChatRequest = await request.json();
-    const { messages, model } = body;
+  const body = await request.json();
+  const { data, error } = await supabase
+    .from('projects')
+    .insert(body)
+    .select()
+    .single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data, { status: 201 });
+}
+\`\`\`
 
-    if (!messages || messages.length === 0) {
-      return NextResponse.json(
-        { error: "Messages are required" },
-        { status: 400 }
-      );
-    }
+### Frontend Component
 
-    // In production, this is where you'd route to actual LLM inference:
-    //
-    // Option 1: Ollama (local)
-    // const response = await fetch('http://localhost:11434/api/chat', {
-    //   method: 'POST',
-    //   body: JSON.stringify({ model: 'codellama:34b', messages }),
-    // });
-    //
-    // Option 2: HuggingFace Inference API
-    // const response = await fetch('https://api-inference.huggingface.co/models/...', {
-    //   headers: { Authorization: `Bearer ${process.env.HF_TOKEN}` },
-    //   body: JSON.stringify({ inputs: messages }),
-    // });
-    //
-    // Option 3: vLLM / TGI endpoint
-    // const response = await fetch('http://your-vllm-server/v1/chat/completions', {
-    //   body: JSON.stringify({ model, messages }),
-    // });
+\`\`\`tsx
+'use client';
+import { useState, useEffect } from 'react';
 
-    const content = generateResponse(messages, model);
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  created_at: string;
+}
 
-    return NextResponse.json({
-      content,
-      model,
-      usage: {
-        prompt_tokens: messages.reduce(
-          (acc, m) => acc + m.content.split(" ").length,
-          0
-        ),
-        completion_tokens: content.split(" ").length,
-      },
-    });
-  } catch {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
-  }
+export default function Dashboard() {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/projects')
+      .then(res => res.json())
+      .then(setProjects)
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="animate-pulse p-8">Loading...</div>;
+
+  return (
+    <div className="max-w-6xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-8">Projects</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {projects.map(p => (
+          <div key={p.id} className="p-5 bg-white/5 rounded-xl border border-white/10 hover:border-cyan-500/50 transition">
+            <h3 className="font-bold text-lg">{p.title}</h3>
+            <p className="text-gray-400 mt-1 text-sm">{p.description}</p>
+            <span className="inline-block mt-3 text-xs px-2 py-0.5 bg-cyan-500/10 text-cyan-400 rounded">{p.status}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+\`\`\`
+
+✅ Full CRUD API · ✅ Responsive UI · ✅ TypeScript · ✅ Supabase integration
+
+*— ${modelName} via INCLAW*`;
 }
