@@ -11,7 +11,8 @@ import { detectTaskType, getModelForTask } from "./model-router.js";
 import { sendAIMessage } from "./puter-backend.js";
 
 /* ── Constants ────────────────────────────────────────────── */
-const MAX_HISTORY = 20; // Keep last 20 messages for context
+const MAX_HISTORY = 20;            // Keep last 20 messages for context
+const COPY_FEEDBACK_DURATION_MS = 2000; // "Copied!" feedback duration
 
 /**
  * ChatHandler class — manages the full chat lifecycle.
@@ -213,7 +214,7 @@ export class ChatHandler {
           setTimeout(() => {
             btn.textContent = "Copy";
             btn.classList.remove("copied");
-          }, 2000);
+          }, COPY_FEEDBACK_DURATION_MS);
         });
       });
       /* Ensure pre is positioned for absolute button placement */

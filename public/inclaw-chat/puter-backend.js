@@ -11,6 +11,10 @@
 
 import { FALLBACK_MODEL } from "./model-router.js";
 
+/* ── Constants ────────────────────────────────────────────── */
+const PUTER_LOAD_TIMEOUT_MS = 15000;
+const POLL_INTERVAL_MS = 200;
+
 /* ── INCLAW System Prompt ─────────────────────────────────── */
 export const INCLAW_SYSTEM_PROMPT =
   "You are INCLAW — India's most powerful open-source AI assistant, " +
@@ -35,19 +39,19 @@ function waitForPuter() {
       resolve();
       return;
     }
-    /* Poll every 200ms, timeout after 15s */
+    /* Poll periodically until timeout */
     let elapsed = 0;
     const interval = setInterval(() => {
       if (typeof puter !== "undefined" && puter.ai) {
         clearInterval(interval);
         resolve();
       }
-      elapsed += 200;
-      if (elapsed > 15000) {
+      elapsed += POLL_INTERVAL_MS;
+      if (elapsed > PUTER_LOAD_TIMEOUT_MS) {
         clearInterval(interval);
         reject(new Error("Puter.js SDK failed to load within 15 seconds."));
       }
-    }, 200);
+    }, POLL_INTERVAL_MS);
   });
 }
 
