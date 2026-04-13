@@ -1,0 +1,196 @@
+# INCLAW Model Architecture Configuration
+
+# ═══════════════════════════════════════════════════════════════
+# INCLAW — Intelligent Neural Cognitive Learning Agent Workflow
+# Model Architecture Specification
+# ═══════════════════════════════════════════════════════════════
+
+model:
+  name: "INCLAW"
+  version: "1.0"
+  type: "multimodal_causal_language_model"
+
+# ─────────────────────────────────────────────
+# Language Model (Core)
+# ─────────────────────────────────────────────
+language_model:
+  architecture: "transformer_decoder_only"
+  
+  # Size configurations (choose one)
+  variants:
+    inclaw_7b:
+      hidden_size: 4096
+      num_layers: 32
+      num_attention_heads: 32
+      num_kv_heads: 8           # GQA: 4:1 ratio
+      intermediate_size: 14336  # SwiGLU: ~3.5x hidden
+      
+    inclaw_70b:                  # ← Recommended primary target
+      hidden_size: 8192
+      num_layers: 80
+      num_attention_heads: 64
+      num_kv_heads: 8           # GQA: 8:1 ratio
+      intermediate_size: 28672  # SwiGLU: ~3.5x hidden
+      
+    inclaw_200b_moe:             # Stretch goal — MoE variant
+      hidden_size: 7168
+      num_layers: 61
+      num_attention_heads: 56
+      num_kv_heads: 8           # GQA
+      intermediate_size: 18432
+      moe:
+        num_experts: 64
+        num_active_experts: 8
+        expert_intermediate_size: 2560
+        routing: "top_k_softmax"
+        load_balancing: "auxiliary_loss_free"  # DeepSeek-V3 style
+  
+  # Common settings across all variants
+  common:
+    vocab_size: 128256
+    max_position_embeddings: 131072  # 128K context
+    
+    # Attention
+    attention_type: "grouped_query_attention"  # GQA
+    attention_bias: false
+    attention_dropout: 0.0
+    
+    # Position encoding
+    position_encoding: "rotary"  # RoPE
+    rope_theta: 500000           # High theta for long context
+    rope_scaling:
+      type: "llama3"            # ABF (Adjusted Base Frequency)
+      factor: 8.0
+      low_freq_factor: 1.0
+      high_freq_factor: 4.0
+      original_max_position_embeddings: 8192
+    
+    # Normalization
+    normalization: "rmsnorm"
+    norm_epsilon: 1.0e-5
+    
+    # Activation
+    activation: "silu"           # SwiGLU uses SiLU gating
+    mlp_type: "swiglu"          # gate_proj, up_proj, down_proj
+    
+    # Embedding
+    tie_word_embeddings: false   # Separate input/output embeddings
+    
+    # Dropout (0 for pre-training, small for fine-tuning)
+    hidden_dropout: 0.0
+    
+    # Precision
+    dtype: "bfloat16"
+
+# ─────────────────────────────────────────────
+# Vision Encoder
+# ─────────────────────────────────────────────
+vision_encoder:
+  architecture: "vision_transformer"
+  
+  primary:
+    name: "InternViT-6B-448px-V2.5"
+    hidden_size: 3200
+    num_layers: 48
+    num_heads: 25
+    intermediate_size: 12800
+    patch_size: 14
+    image_size: 448              # Per tile
+    
+  alternative:
+    name: "SigLIP-SO400M-384"
+    hidden_size: 1152
+    num_layers: 27
+    num_heads: 16
+    intermediate_size: 4304
+    patch_size: 14
+    image_size: 384
+
+  dynamic_resolution:
+    enabled: true
+    tile_size: 448               # Match image_size
+    max_tiles: 12
+    min_tiles: 1
+    include_thumbnail: true
+    
+  pixel_shuffle:
+    enabled: true
+    scale_factor: 2              # 2×2 merge → 4x token reduction
+    # Tokens per tile: (448/14)² = 1024 → 256 after shuffle
+
+# ─────────────────────────────────────────────
+# Vision-Language Adapter
+# ─────────────────────────────────────────────
+vision_adapter:
+  type: "mlp_2layer"
+  
+  layer_1:
+    in_features: 3200           # Vision encoder hidden_size
+    out_features: 8192          # LLM hidden_size (70B variant)
+    activation: "gelu"
+    
+  layer_2:
+    in_features: 8192
+    out_features: 8192
+    activation: "none"           # Linear
+
+# ─────────────────────────────────────────────
+# Special Tokens
+# ─────────────────────────────────────────────
+special_tokens:
+  bos_token: "<|begin_of_text|>"
+  eos_token: "<|end_of_text|>"
+  pad_token: "<|finetune_right_pad_id|>"
+  
+  # Chat tokens
+  start_header: "<|start_header_id|>"
+  end_header: "<|end_header_id|>"
+  eot: "<|eot_id|>"
+  
+  # Vision tokens
+  image_start: "<img>"
+  image_end: "</img>"
+  image_pad: "<img_pad>"
+  
+  # Tool tokens
+  tool_call_start: "<tool_call>"
+  tool_call_end: "</tool_call>"
+  tool_result_start: "<tool_result>"
+  tool_result_end: "</tool_result>"
+  
+  # Thinking tokens (for chain-of-thought)
+  thinking_start: "<thinking>"
+  thinking_end: "</thinking>"
+
+# ─────────────────────────────────────────────
+# Chat Template
+# ─────────────────────────────────────────────
+chat_template: |
+  <|begin_of_text|>
+  <|start_header_id|>system<|end_header_id|>
+  {system_message}<|eot_id|>
+  <|start_header_id|>user<|end_header_id|>
+  {user_message}<|eot_id|>
+  <|start_header_id|>assistant<|end_header_id|>
+  {assistant_message}<|eot_id|>
+
+# ─────────────────────────────────────────────
+# Inference Configuration
+# ─────────────────────────────────────────────
+inference:
+  default_max_tokens: 4096
+  temperature: 0.7
+  top_p: 0.9
+  top_k: 50
+  repetition_penalty: 1.0
+  
+  # KV cache optimization
+  kv_cache:
+    type: "paged_attention"     # vLLM style
+    block_size: 16
+    
+  # Speculative decoding (optional)
+  speculative:
+    enabled: false
+    draft_model: "inclaw_7b"    # Use smaller variant as draft
+    num_speculative_tokens: 5
