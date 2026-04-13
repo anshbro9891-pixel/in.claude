@@ -24,6 +24,14 @@ interface ModelSelection {
 }
 
 const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434";
+const OLLAMA_API_KEY = process.env.OLLAMA_API_KEY || process.env.NEXT_PUBLIC_OLLAMA_API_KEY || "";
+
+function ollamaHeaders(includeJson = false) {
+  const headers: Record<string, string> = {};
+  if (includeJson) headers["Content-Type"] = "application/json";
+  if (OLLAMA_API_KEY) headers.Authorization = `Bearer ${OLLAMA_API_KEY}`;
+  return headers;
+}
 
 function resolveModel(message: string, model?: string, autoRoute = true): ModelSelection {
   const requested = SUPPORTED_MODELS.find(
@@ -60,7 +68,10 @@ async function checkOllamaStatus(tag: string): Promise<OllamaTagStatus> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 2500);
-    const response = await fetch(`${OLLAMA_URL}/api/tags`, { signal: controller.signal });
+    const response = await fetch(`${OLLAMA_URL}/api/tags`, {
+      signal: controller.signal,
+      headers: ollamaHeaders(),
+    });
     clearTimeout(timeout);
 
     if (!response.ok) return { available: false, modelReady: false };
@@ -152,7 +163,7 @@ export async function POST(request: NextRequest) {
         try {
           const ollamaRes = await fetch(`${OLLAMA_URL}/api/chat`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: ollamaHeaders(true),
             body: JSON.stringify(fullMessages),
           });
 

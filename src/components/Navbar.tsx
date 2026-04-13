@@ -11,6 +11,8 @@ const NAV_LINKS = [
   { href: "#models",   label: "Models" },
   { href: "#demo",     label: "Demo" },
   { href: "#about",    label: "About" },
+  { href: "/pricing",  label: "Pricing" },
+  { href: "/signup",   label: "Sign up" },
   { href: "/workspace", label: "Workspace" },
   { href: "/learn",    label: "Learn" },
 ];
