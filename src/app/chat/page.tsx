@@ -232,13 +232,13 @@ export default function ChatPage() {
     if (!prompt || isLoading) return;
 
     const userMsg: Message = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       role: "user",
       content: prompt,
       timestamp: new Date(),
     };
 
-    const thinkingMsgId = (Date.now() + 0.5).toString();
+    const thinkingMsgId = crypto.randomUUID();
     const thinkingMsg: Message = {
       id: thinkingMsgId,
       role: "assistant",

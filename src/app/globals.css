@@ -249,3 +249,213 @@ body {
   outline: 2px solid rgba(249, 115, 22, 0.6);
   outline-offset: 2px;
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   3026 DESIGN SYSTEM ADDITIONS
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Scanlines — cinematic CRT overlay ─────────────────────────────── */
+.scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.08) 2px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+  pointer-events: none;
+}
+
+/* ── Noise glass — frosted surface with grain texture ──────────────── */
+.glass-noise {
+  background: rgba(7, 0, 46, 0.55);
+  backdrop-filter: blur(32px) saturate(160%);
+  -webkit-backdrop-filter: blur(32px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  position: relative;
+  overflow: hidden;
+}
+.glass-noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 128px 128px;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* ── RGB shift / chromatic aberration on hover ─────────────────────── */
+.rgb-shift {
+  transition: filter 0.2s ease;
+}
+.rgb-shift:hover {
+  filter: drop-shadow(-1px 0 0 rgba(255,0,80,0.4)) drop-shadow(1px 0 0 rgba(0,200,255,0.4));
+}
+
+/* ── Depth card — layered 3D feel ──────────────────────────────────── */
+.depth-card {
+  transform-style: preserve-3d;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s ease;
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.4),
+    0 8px 32px rgba(0,0,0,0.3),
+    0 0 0 1px rgba(255,255,255,0.05),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.depth-card:hover {
+  transform: translateY(-6px) rotateX(2deg) rotateY(-1deg);
+  box-shadow:
+    0 4px 16px rgba(0,0,0,0.5),
+    0 16px 48px rgba(0,0,0,0.4),
+    0 0 0 1px rgba(255,255,255,0.08),
+    0 0 60px rgba(249,115,22,0.06);
+}
+
+/* ── Holographic border — animated rainbow edge ────────────────────── */
+.holo-border {
+  position: relative;
+  border-radius: 1.25rem;
+}
+.holo-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    #ff6b00, #ff9500, #ffcc00, #00d4ff, #7c3aed, #ff6b00
+  );
+  background-size: 400% 400%;
+  animation: holo-rotate 6s linear infinite;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.holo-border:hover::before { opacity: 0.5; }
+
+@keyframes holo-rotate {
+  0%   { background-position: 0% 50%;   }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%;   }
+}
+
+/* ── Neon text glow ────────────────────────────────────────────────── */
+.neon-orange { text-shadow: 0 0 8px rgba(249,115,22,0.9), 0 0 30px rgba(249,115,22,0.5), 0 0 60px rgba(249,115,22,0.2); }
+.neon-cyan   { text-shadow: 0 0 8px rgba(6,182,212,0.9),  0 0 30px rgba(6,182,212,0.5),  0 0 60px rgba(6,182,212,0.2);  }
+
+/* ── Kinetic underline ──────────────────────────────────────────────── */
+.kinetic-link {
+  position: relative;
+}
+.kinetic-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, #f97316, #06b6d4);
+  transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.kinetic-link:hover::after { width: 100%; }
+
+/* ── Glitch text effect (use sparingly) ────────────────────────────── */
+@keyframes glitch-a {
+  0%, 100% { clip-path: inset(40% 0 61% 0); transform: translate(-2px, 0); }
+  20%       { clip-path: inset(92% 0 1%  0); transform: translate(2px,  0); }
+  40%       { clip-path: inset(43% 0 53% 0); transform: translate(-2px, 0); }
+  60%       { clip-path: inset(25% 0 58% 0); transform: translate(2px,  0); }
+  80%       { clip-path: inset(54% 0 7%  0); transform: translate(-2px, 0); }
+}
+@keyframes glitch-b {
+  0%, 100% { clip-path: inset(40% 0 61% 0); transform: translate(2px, 0);  }
+  20%       { clip-path: inset(92% 0 1%  0); transform: translate(-2px, 0); }
+  40%       { clip-path: inset(43% 0 53% 0); transform: translate(2px, 0);  }
+  60%       { clip-path: inset(25% 0 58% 0); transform: translate(-2px, 0); }
+  80%       { clip-path: inset(54% 0 7%  0); transform: translate(2px, 0);  }
+}
+.glitch-text { position: relative; }
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+}
+.glitch-text::before {
+  color: rgba(249,115,22,0.8);
+  animation: glitch-a 4s infinite linear alternate-reverse;
+}
+.glitch-text::after {
+  color: rgba(6,182,212,0.8);
+  animation: glitch-b 4s infinite linear alternate-reverse;
+  animation-delay: -2s;
+}
+
+/* ── Spatial depth shadow ───────────────────────────────────────────── */
+.shadow-neural {
+  box-shadow:
+    0 0 0 1px rgba(249,115,22,0.08),
+    0 4px 24px rgba(0,0,0,0.5),
+    0 0 80px rgba(249,115,22,0.04),
+    0 0 160px rgba(6,182,212,0.03);
+}
+
+/* ── Auth input focus glow ──────────────────────────────────────────── */
+.auth-input {
+  caret-color: #f97316;
+}
+.auth-input:focus {
+  box-shadow: 0 0 0 2px rgba(249,115,22,0.15), 0 0 20px rgba(249,115,22,0.08);
+}
+
+/* ── Progress bar animation ─────────────────────────────────────────── */
+@keyframes progress-sweep {
+  from { transform: scaleX(0); transform-origin: left; }
+  to   { transform: scaleX(1); transform-origin: left; }
+}
+.animate-progress { animation: progress-sweep 1.5s ease forwards; }
+
+/* ── Laser line scan ────────────────────────────────────────────────── */
+@keyframes laser-scan {
+  0%   { top: -2px; opacity: 0.8; }
+  100% { top: 100%; opacity: 0; }
+}
+.laser-scan {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.6), transparent);
+  animation: laser-scan 3s ease-in infinite;
+  pointer-events: none;
+}
+
+/* ── Perspective container ──────────────────────────────────────────── */
+.perspective-container {
+  perspective: 800px;
+  perspective-origin: 50% 50%;
+}
+
+/* ── Video vignette overlay ─────────────────────────────────────────── */
+.vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(2, 0, 16, 0.6) 100%
+  );
+  pointer-events: none;
+}
+
+/* ── Letterbox bars (cinematic) ─────────────────────────────────────── */
+.letterbox::before,
+.letterbox::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 40px;
+  background: rgba(2, 0, 16, 0.85);
+  pointer-events: none;
+  z-index: 10;
+}
+.letterbox::before { top: 0; }
+.letterbox::after  { bottom: 0; }
