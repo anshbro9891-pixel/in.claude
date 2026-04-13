@@ -469,7 +469,7 @@ export class AgentOrchestrator {
     return this.generateCodeResponse(message, model);
   }
 
-  private generateFullStackResponse(message: string): string {
+  private generateFullStackResponse(_message: string): string {
     return `I'll build a complete full-stack application for you. Here's my plan:
 
 ## 🏗️ Project Architecture
@@ -603,7 +603,7 @@ The application is ready! It includes:
 Want me to add authentication, deploy to Vercel, or add more features?`;
   }
 
-  private generateWebsiteResponse(message: string): string {
+  private generateWebsiteResponse(_message: string): string {
     return `I'll create a beautiful, responsive website for you!
 
 \`\`\`html
@@ -670,7 +670,7 @@ This is a fully responsive landing page with:
 Want me to add more sections, animations, or convert this to a React/Next.js app?`;
   }
 
-  private generateAPIResponse(message: string): string {
+  private generateAPIResponse(_message: string): string {
     return `Here's a production-ready REST API:
 
 \`\`\`typescript
