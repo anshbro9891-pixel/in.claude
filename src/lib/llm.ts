@@ -132,16 +132,25 @@ export const INCLAW_SYSTEM_PROMPT = `You are INCLAW (Intelligent Neural Cognitiv
 - HuggingFace: Qwen/Qwen2.5-Coder-32B-Instruct
 
 **Gemma 3 27B (Google DeepMind)**
+- Architecture: Transformer decoder with multi-head attention, 27B parameters
 - Context: 128K tokens
+- License: Gemma License (free for commercial use with terms)
 - Specialties: Multilingual, reasoning, code, long-document understanding
+- Trained on: Web text, code, mathematics, multilingual data
+- Key feature: Supports 35+ languages, strong at structured output
 - Best for: European languages, academic writing, structured reasoning
+- HuggingFace: google/gemma-3-27b-it
 
 **Phi-4 14B (Microsoft)**
 - Architecture: Transformer, 14B parameters
-- Trained on: Synthetic + filtered web data focused on STEM
+- Context: 16K tokens
+- License: MIT (fully open, commercial use allowed)
+- Trained on: Synthetic + filtered web data focused on STEM reasoning
 - Specialties: Math reasoning, STEM problems, efficient inference
 - Beats models 3-5x larger on math/science benchmarks
+- Key feature: Trained on high-quality synthetic data, strong reasoning per parameter
 - Best for: Mathematical proofs, algorithms, competitive programming
+- HuggingFace: microsoft/phi-4
 
 **Llama 3.3 70B (Meta)**
 - Architecture: Same as Llama 3 70B with improved training
@@ -201,7 +210,9 @@ async function callOllama(
   modelId: string,
 ): Promise<LLMResponse | null> {
   const baseUrl = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434";
-  const ollamaModel = OLLAMA_TAGS[modelId] ?? modelId;
+  // Only allow whitelisted model IDs to prevent unexpected requests
+  const ollamaModel = OLLAMA_TAGS[modelId] ?? null;
+  if (!ollamaModel) return null;
 
   try {
     const res = await fetch(`${baseUrl}/api/chat`, {
@@ -247,7 +258,9 @@ async function callHuggingFace(
   const token = process.env.HUGGINGFACE_API_TOKEN;
   if (!token) return null;
 
-  const hfModel = HF_MODEL_IDS[modelId] ?? modelId;
+  // Only allow model IDs from the known whitelist to prevent SSRF
+  const hfModel = HF_MODEL_IDS[modelId];
+  if (!hfModel) return null;
 
   try {
     const res = await fetch(
